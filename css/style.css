@@ -1,0 +1,21 @@
+body {
+  background: #5c94fc;
+  font-family: Arial;
+  text-align: center;
+  color: white;
+  padding-top: 50px;
+}
+
+button {
+  padding: 15px 30px;
+  margin: 10px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+input {
+  padding: 12px;
+  font-size: 18px;
+}
