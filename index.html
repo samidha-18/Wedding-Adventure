@@ -23,8 +23,14 @@
   </div>
 
   <div id="gameScreen" style="display:none;">
-    <h2 id="welcomeText"></h2>
-    <p>Game has started 🎮</p>
+    <div id="hud">
+      <span id="welcomeText"></span>
+      <span>Score: <b id="score">0</b></span>
+    </div>
+
+    <canvas id="gameCanvas" width="900" height="500"></canvas>
+
+    <p>Use ← → to move. Space to jump.</p>
   </div>
 
   <script src="js/game.js"></script>
