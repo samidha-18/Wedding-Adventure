@@ -40,6 +40,27 @@ let coins = [
   { x: 1460, y: 225, radius: 12, collected: false }
 ];
 
+let enemies = [
+  {
+    x: 650,
+    y: 380,
+    width: 35,
+    height: 40,
+    direction: 1,
+    speed: 1.5,
+    alive: true
+  },
+  {
+    x: 1250,
+    y: 380,
+    width: 35,
+    height: 40,
+    direction: -1,
+    speed: 1.5,
+    alive: true
+  }
+];
+
 function selectSide(side) {
   selectedSide = side;
   alert(side === "groom" ? "Groom Side selected 🤵" : "Bride Side selected 👰");
@@ -119,6 +140,7 @@ function updatePlayer() {
 
   updateCamera();
   collectCoins();
+  updateEnemies();
 }
 
 function updateCamera() {
@@ -146,6 +168,76 @@ function collectCoins() {
       score += 10;
       document.getElementById("score").innerText = score;
     }
+  });
+}
+function updateEnemies() {
+  enemies.forEach(enemy => {
+
+    if (!enemy.alive) return;
+
+    enemy.x += enemy.speed * enemy.direction;
+
+    if (enemy.x < 550) enemy.direction = 1;
+    if (enemy.x > 750) enemy.direction = -1;
+
+    const playerBottom = player.y + player.height;
+
+    const collision =
+      player.x < enemy.x + enemy.width &&
+      player.x + player.width > enemy.x &&
+      player.y < enemy.y + enemy.height &&
+      playerBottom > enemy.y;
+
+    if (collision) {
+
+      const stomp =
+        player.velocityY > 0 &&
+        playerBottom < enemy.y + 20;
+
+      if (stomp) {
+        enemy.alive = false;
+        score += 100;
+        document.getElementById("score").innerText = score;
+        player.velocityY = -8;
+      } else {
+        player.x = 80;
+        player.y = 360;
+      }
+    }
+  });
+}
+
+function drawEnemies() {
+  const context = ctx();
+
+  enemies.forEach(enemy => {
+
+    if (!enemy.alive) return;
+
+    context.fillStyle = "#8b0000";
+
+    context.fillRect(
+      enemy.x - cameraX,
+      enemy.y,
+      enemy.width,
+      enemy.height
+    );
+
+    context.fillStyle = "white";
+
+    context.fillRect(
+      enemy.x - cameraX + 5,
+      enemy.y + 8,
+      6,
+      6
+    );
+
+    context.fillRect(
+      enemy.x - cameraX + 24,
+      enemy.y + 8,
+      6,
+      6
+    );
   });
 }
 
@@ -209,7 +301,7 @@ function drawGame() {
       context.stroke();
     }
   });
-
+  drawEnemies();
   // player
   context.fillStyle = selectedSide === "groom" ? "#1f2a44" : "#ff8fab";
   context.fillRect(player.x - cameraX, player.y, player.width, player.height);
