@@ -404,8 +404,12 @@ function isPipeUnlocked() {
 }
 
 function checkPipeTrigger() {
+
   if (event1Shown || pipeSceneActive) return;
+
   if (!isPipeUnlocked()) return;
+
+  if (diamondOwner !== "player") return;
 
   const nearPipe =
     player.x + player.width > pipe.x - 10 &&
@@ -413,6 +417,7 @@ function checkPipeTrigger() {
     player.y + player.height >= pipe.y;
 
   if (nearPipe) {
+
     gamePaused = true;
     pipeSceneActive = true;
     pipeSceneStage = "pop";
