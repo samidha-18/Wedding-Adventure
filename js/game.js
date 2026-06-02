@@ -193,10 +193,10 @@ function blockPipeIfGuardAlive() {
   const pipeGuard = enemies.find(enemy => enemy.id === "pipeGuard");
 
   if (pipeGuard && pipeGuard.alive) {
-    const pipeWallX = pipe.x - 18;
+    const invisibleWallX = pipe.x - 4;
 
-    if (player.x + player.width > pipeWallX) {
-      player.x = pipeWallX - player.width;
+    if (player.x + player.width > invisibleWallX) {
+      player.x = invisibleWallX - player.width;
     }
   }
 }
@@ -608,6 +608,7 @@ function drawPipe() {
   context.strokeStyle = "#064d18";
   context.strokeRect(pipe.x - cameraX, pipe.y, pipe.width, pipe.height);
   context.strokeRect(pipe.x - cameraX - 10, pipe.y, pipe.width + 20, 20);
+}
 
   if (!isPipeUnlocked()) {
     context.fillStyle = "rgba(255, 0, 0, 0.3)";
@@ -620,15 +621,15 @@ function drawPipeLockMessage() {
 
   const distanceToPipe = Math.abs((player.x + player.width) - pipe.x);
 
-  if (distanceToPipe < 180) {
+  if (distanceToPipe < 160) {
     const context = ctx();
 
-    context.fillStyle = "rgba(0, 0, 0, 0.6)";
-    context.fillRect(240, 35, 420, 50);
+    context.fillStyle = "rgba(0, 0, 0, 0.55)";
+    context.fillRect(245, 35, 410, 50);
 
     context.fillStyle = "#fff7b2";
     context.font = "20px Arial";
-    context.fillText("Defeat the pipe guard first!", 330, 67);
+    context.fillText("Defeat the guard to unlock the pipe!", 285, 67);
   }
 }
 
@@ -638,7 +639,10 @@ function drawPipeScene() {
 }
 
 function drawPartnerPopBehindPipe() {
+  const context = ctx();
+
   const isPartnerMale = selectedSide === "bride";
+  const partnerName = isPartnerMale ? coupleNames.groom : coupleNames.bride;
 
   const partnerW = isPartnerMale ? 48 : 40;
   const partnerH = isPartnerMale ? 70 : 55;
@@ -658,6 +662,15 @@ function drawPartnerPopBehindPipe() {
     partnerH,
     isPartnerMale ? "#1f2a44" : "#ff8fab"
   );
+
+  if (progress > 0.75) {
+    context.fillStyle = "rgba(0, 0, 0, 0.55)";
+    context.fillRect(partnerX - 18, partnerY - 32, partnerW + 36, 24);
+
+    context.fillStyle = "#fff7b2";
+    context.font = "16px Arial";
+    context.fillText(partnerName, partnerX - 5, partnerY - 14);
+  }
 }
 
 function drawHandoffScene() {
@@ -737,7 +750,7 @@ function drawTwirlScene() {
 
   context.fillStyle = "#fff7b2";
   context.font = "22px Arial";
-  context.fillText("A Wedding Moment...", 340, 65);
+  context.fillText("We’re Ringing in the Wedding Bells...", 320, 65);
 }
 
 function drawPlayer() {
@@ -807,6 +820,8 @@ function drawConstantGlow(x, y) {
 
 function drawSparkleMessage() {
   if (sparkleMessageTimer <= 0) return;
+  if (pipeSceneActive || event1Shown) return;
+  if (diamondOwner !== "player") return;
 
   const context = ctx();
 
@@ -815,6 +830,8 @@ function drawSparkleMessage() {
 
   context.fillStyle = "#fff7b2";
   context.font = "24px Arial";
+  context.fillText("The Diamond Is Yours...", 320, 68);
+}
 
   if (!isPipeUnlocked() && player.x > 1200) {
     context.fillText("Pipe guard blocks the way!", 315, 68);
