@@ -8,10 +8,6 @@ let gamePaused = false;
 let event1Shown = false;
 
 let diamondOwner = "none"; 
-// "none" = diamond in level
-// "player" = diamond follows running character
-// "partner" = diamond handed to partner
-
 let sparkleMessageTimer = 0;
 
 let pipeSceneActive = false;
@@ -35,20 +31,9 @@ let keys = {};
 
 const levelWidth = 2200;
 
-const diamond = {
-  x: 430,
-  y: 360,
-  width: 32,
-  height: 32,
-  collected: false
-};
+const diamond = { x: 430, y: 360, width: 32, height: 32, collected: false };
 
-const pipe = {
-  x: 1550,
-  y: 330,
-  width: 70,
-  height: 90
-};
+const pipe = { x: 1550, y: 330, width: 70, height: 90 };
 
 const platforms = [
   { x: 250, y: 340, width: 150, height: 25 },
@@ -71,28 +56,8 @@ let coins = [
 ];
 
 let enemies = [
-  {
-    x: 650,
-    y: 380,
-    width: 35,
-    height: 40,
-    direction: 1,
-    speed: 1.5,
-    alive: true,
-    minX: 550,
-    maxX: 750
-  },
-  {
-    x: 1250,
-    y: 380,
-    width: 35,
-    height: 40,
-    direction: -1,
-    speed: 1.5,
-    alive: true,
-    minX: 1180,
-    maxX: 1380
-  }
+  { x: 650, y: 380, width: 35, height: 40, direction: 1, speed: 1.5, alive: true, minX: 550, maxX: 750 },
+  { x: 1250, y: 380, width: 35, height: 40, direction: -1, speed: 1.5, alive: true, minX: 1180, maxX: 1380 }
 ];
 
 function selectSide(side) {
@@ -199,7 +164,6 @@ function updatePlayer() {
 function updateCamera() {
   const c = canvas();
   cameraX = player.x - c.width / 2 + player.width / 2;
-
   if (cameraX < 0) cameraX = 0;
   if (cameraX > levelWidth - c.width) cameraX = levelWidth - c.width;
 }
@@ -208,11 +172,8 @@ function collectCoins() {
   coins.forEach(coin => {
     if (coin.collected) return;
 
-    const playerCenterX = player.x + player.width / 2;
-    const playerCenterY = player.y + player.height / 2;
-
-    const dx = playerCenterX - coin.x;
-    const dy = playerCenterY - coin.y;
+    const dx = player.x + player.width / 2 - coin.x;
+    const dy = player.y + player.height / 2 - coin.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     if (distance < coin.radius + 25) {
@@ -237,7 +198,6 @@ function collectDiamond() {
     diamondOwner = "player";
     score += 250;
     updateScore();
-
     sparkleMessageTimer = 160;
   }
 }
@@ -247,7 +207,6 @@ function updateEnemies() {
     if (!enemy.alive) return;
 
     enemy.x += enemy.speed * enemy.direction;
-
     if (enemy.x < enemy.minX) enemy.direction = 1;
     if (enemy.x > enemy.maxX) enemy.direction = -1;
 
@@ -322,18 +281,18 @@ function updatePipeScene() {
 
   pipeSceneTimer++;
 
-  if (pipeSceneStage === "pop" && pipeSceneTimer > 90) {
+  if (pipeSceneStage === "pop" && pipeSceneTimer > 100) {
     pipeSceneStage = "handoff";
     pipeSceneTimer = 0;
   }
 
-  if (pipeSceneStage === "handoff" && pipeSceneTimer > 70) {
+  if (pipeSceneStage === "handoff" && pipeSceneTimer > 80) {
     diamondOwner = "partner";
     pipeSceneStage = "twirl";
     pipeSceneTimer = 0;
   }
 
-  if (pipeSceneStage === "twirl" && pipeSceneTimer > 150) {
+  if (pipeSceneStage === "twirl" && pipeSceneTimer > 210) {
     pipeSceneActive = false;
     event1Shown = true;
     score += 300;
@@ -386,13 +345,21 @@ function drawGame() {
   drawCoins();
   drawDiamondInLevel();
   drawEnemies();
-  drawPipe();
 
-  if (pipeSceneActive) {
-    drawPipeScene();
-  } else {
+  if (pipeSceneActive && pipeSceneStage === "pop") {
+    drawPartnerPopBehindPipe();
+    drawPipe();
     drawPlayer();
     drawDiamondFollowingPlayer();
+  } else {
+    drawPipe();
+
+    if (pipeSceneActive) {
+      drawPipeScene();
+    } else {
+      drawPlayer();
+      drawDiamondFollowingPlayer();
+    }
   }
 
   drawSparkleMessage();
@@ -404,7 +371,6 @@ function drawPlatforms() {
   platforms.forEach(platform => {
     context.fillStyle = "#b5651d";
     context.fillRect(platform.x - cameraX, platform.y, platform.width, platform.height);
-
     context.strokeStyle = "#6b3f1d";
     context.strokeRect(platform.x - cameraX, platform.y, platform.width, platform.height);
   });
@@ -419,7 +385,6 @@ function drawCoins() {
       context.fillStyle = "#ffd700";
       context.arc(coin.x - cameraX, coin.y, coin.radius, 0, Math.PI * 2);
       context.fill();
-
       context.strokeStyle = "#b8860b";
       context.stroke();
     }
@@ -428,7 +393,6 @@ function drawCoins() {
 
 function drawDiamondInLevel() {
   if (diamond.collected) return;
-
   drawSmallDiamond(diamond.x - cameraX, diamond.y);
 }
 
@@ -472,38 +436,24 @@ function drawPipe() {
 }
 
 function drawPipeScene() {
-  if (pipeSceneStage === "pop") {
-    drawPartnerPop();
-    drawPlayer();
-    drawDiamondFollowingPlayer();
-  }
-
-  if (pipeSceneStage === "handoff") {
-    drawHandoffScene();
-  }
-
-  if (pipeSceneStage === "twirl") {
-    drawTwirlScene();
-  }
+  if (pipeSceneStage === "handoff") drawHandoffScene();
+  if (pipeSceneStage === "twirl") drawTwirlScene();
 }
 
-function drawPartnerPop() {
-  const context = ctx();
-
+function drawPartnerPopBehindPipe() {
   const isPartnerMale = selectedSide === "bride";
 
   const partnerW = isPartnerMale ? 48 : 40;
   const partnerH = isPartnerMale ? 70 : 55;
 
-  const progress = Math.min(pipeSceneTimer / 90, 1);
+  const progress = Math.min(pipeSceneTimer / 100, 1);
 
-  const startY = pipe.y + 30;
+  const startY = pipe.y + 25;
   const endY = pipe.y - partnerH + 5;
 
   const partnerX = pipe.x + pipe.width / 2 - partnerW / 2 - cameraX;
   const partnerY = startY + (endY - startY) * progress;
 
-  // Draw partner first
   drawCharacter(
     partnerX,
     partnerY,
@@ -511,13 +461,6 @@ function drawPartnerPop() {
     partnerH,
     isPartnerMale ? "#1f2a44" : "#ff8fab"
   );
-
-  // Redraw pipe lip over partner so partner appears behind pipe
-  context.fillStyle = "#10b33f";
-  context.fillRect(pipe.x - cameraX - 10, pipe.y, pipe.width + 20, 20);
-
-  context.strokeStyle = "#064d18";
-  context.strokeRect(pipe.x - cameraX - 10, pipe.y, pipe.width + 20, 20);
 }
 
 function drawHandoffScene() {
@@ -536,11 +479,10 @@ function drawHandoffScene() {
   drawCharacter(playerX, playerY, player.width, player.height, isPlayerMale ? "#1f2a44" : "#ff8fab");
   drawCharacter(partnerX, partnerY, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
 
-  const progress = Math.min(pipeSceneTimer / 70, 1);
+  const progress = Math.min(pipeSceneTimer / 80, 1);
 
   const startX = playerX + player.width / 2 - 12;
   const startY = playerY - 30;
-
   const endX = partnerX + partnerW / 2 - 12;
   const endY = partnerY - 30;
 
@@ -555,13 +497,11 @@ function drawTwirlScene() {
   const context = ctx();
 
   const centerX = pipe.x + pipe.width / 2 - cameraX;
-  const baseY = pipe.y - 72;
+  const baseY = pipe.y - 8;
 
   const t = pipeSceneTimer;
-
-  // slower rhythm
-  const sway = Math.sin(t * 0.08) * 12;
-  const bounce = Math.abs(Math.sin(t * 0.08)) * 6;
+  const sway = Math.sin(t * 0.06) * 10;
+  const bounce = Math.abs(Math.sin(t * 0.06)) * 5;
 
   const isPlayerMale = selectedSide === "groom";
   const isPartnerMale = selectedSide === "bride";
@@ -578,52 +518,21 @@ function drawTwirlScene() {
   const partnerX = centerX + 4 - sway;
   const partnerY = baseY - partnerH + bounce;
 
-  drawCharacter(
-    playerX,
-    playerY,
-    playerW,
-    playerH,
-    isPlayerMale ? "#1f2a44" : "#ff8fab"
-  );
+  drawCharacter(playerX, playerY, playerW, playerH, isPlayerMale ? "#1f2a44" : "#ff8fab");
+  drawCharacter(partnerX, partnerY, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
 
-  drawCharacter(
-    partnerX,
-    partnerY,
-    partnerW,
-    partnerH,
-    isPartnerMale ? "#1f2a44" : "#ff8fab"
-  );
-
-  // diamond gently floats between them
   const diamondX = centerX - 12;
-  const diamondY = baseY - 95 + Math.sin(t * 0.06) * 5;
+  const diamondY = baseY - 95 + Math.sin(t * 0.04) * 5;
 
   drawSmallDiamond(diamondX, diamondY);
   drawBlinkGlow(centerX, baseY - 35);
 
-  // subtle rhythm sparkles
   for (let i = 0; i < 6; i++) {
     const sparkleX = centerX - 45 + i * 18;
-    const sparkleY = baseY - 85 + Math.sin(t * 0.08 + i) * 8;
+    const sparkleY = baseY - 85 + Math.sin(t * 0.06 + i) * 8;
 
     context.fillStyle = i % 2 === 0 ? "#fff7b2" : "#b9f2ff";
     context.fillRect(sparkleX, sparkleY, 4, 4);
-  }
-
-  context.fillStyle = "rgba(0, 0, 0, 0.55)";
-  context.fillRect(300, 35, 300, 45);
-
-  context.fillStyle = "#fff7b2";
-  context.font = "22px Arial";
-  context.fillText("A Wedding Moment...", 340, 65);
-}
-  for (let i = 0; i < 10; i++) {
-    const sparkleAngle = angle + i * 0.7;
-    const sx = centerX + Math.cos(sparkleAngle) * (45 + i);
-    const sy = centerY + Math.sin(sparkleAngle) * (25 + i / 2);
-
-    context.fillStyle = i % 2 === 0 ? "#fff7b2" : "#b9f2ff";
-    context.fillRect(sx, sy, 5, 5);
   }
 
   context.fillStyle = "rgba(0, 0, 0, 0.55)";
@@ -646,10 +555,7 @@ function drawPlayer() {
   );
 
   if (event1Shown) {
-    drawConstantGlow(
-      player.x - cameraX + player.width / 2,
-      player.y + player.height / 2
-    );
+    drawConstantGlow(player.x - cameraX + player.width / 2, player.y + player.height / 2);
   }
 }
 
@@ -688,7 +594,6 @@ function drawBlinkGlow(x, y) {
   if (!blink) return;
 
   const context = ctx();
-
   context.beginPath();
   context.fillStyle = "rgba(185, 242, 255, 0.28)";
   context.arc(x, y, 42, 0, Math.PI * 2);
@@ -697,7 +602,6 @@ function drawBlinkGlow(x, y) {
 
 function drawConstantGlow(x, y) {
   const context = ctx();
-
   context.beginPath();
   context.fillStyle = "rgba(255, 247, 178, 0.25)";
   context.arc(x, y, 45, 0, Math.PI * 2);
