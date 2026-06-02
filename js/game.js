@@ -20,6 +20,9 @@ const coupleNames = {
   bride: "Jane"
 };
 
+const canvas = () => document.getElementById("gameCanvas");
+const ctx = () => canvas().getContext("2d");
+
 const groomSprite = new Image();
 groomSprite.src = "assets/characters/groom.png";
 
@@ -679,26 +682,28 @@ function drawDiamondInLevel() {
   const scale = 1 + Math.sin(t) * 0.25;
   const angle = t * 0.8;
 
-  drawRotatingDiamond(diamond.x - cameraX + 12, diamond.y + 12, 16 * scale, angle);
+  drawRotatingDiamond(
+    diamond.x - cameraX + 12,
+    diamond.y + 12,
+    16 * scale,
+    angle
+  );
+
+  for (let i = 0; i < 4; i++) {
+    const sparkleAngle = t + i * Math.PI / 2;
+
+    const sx =
+      diamond.x - cameraX + 12 +
+      Math.cos(sparkleAngle) * 28;
+
+    const sy =
+      diamond.y + 12 +
+      Math.sin(sparkleAngle) * 28;
+
+    ctx().fillStyle = "#ffffff";
+    ctx().fillRect(sx, sy, 3, 3);
+  }
 }
-
-for(let i=0;i<4;i++){
-
-  const sparkleAngle = t + i * Math.PI/2;
-
-  const sx =
-    diamond.x - cameraX + 12 +
-    Math.cos(sparkleAngle) * 28;
-
-  const sy =
-    diamond.y + 12 +
-    Math.sin(sparkleAngle) * 28;
-
-  ctx().fillStyle = "#ffffff";
-
-  ctx().fillRect(sx, sy, 3, 3);
-}
-
 function drawDiamondFollowingPlayer() {
   if (diamondOwner !== "player") return;
 
