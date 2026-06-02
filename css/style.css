@@ -64,3 +64,17 @@ canvas {
   margin-top: 0;
   color: #b83232;
 }
+
+#selectionStatus{
+
+  margin-top:12px;
+
+  min-height:24px;
+
+  color:#ffd700;
+
+  font-weight:bold;
+
+  font-size:18px;
+
+}
