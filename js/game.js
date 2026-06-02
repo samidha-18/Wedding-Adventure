@@ -24,10 +24,10 @@ const canvas = () => document.getElementById("gameCanvas");
 const ctx = () => canvas().getContext("2d");
 
 const groomSprite = new Image();
-groomSprite.src = "assets/characters/groom.png";
+groomSprite.src = "assets/characters/Groom.png";
 
 const brideSprite = new Image();
-brideSprite.src = "assets/characters/bride.png";
+brideSprite.src = "assets/characters/Bride.png";
 
 let player = {
   x: 80,
