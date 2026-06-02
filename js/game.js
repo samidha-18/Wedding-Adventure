@@ -8,6 +8,9 @@ let event1Shown = false;
 let diamondCollected = false;
 let sparkleMessageTimer = 0;
 
+let twirlActive = false;
+let twirlTimer = 0;
+
 const canvas = () => document.getElementById("gameCanvas");
 const ctx = () => canvas().getContext("2d");
 
@@ -131,7 +134,10 @@ document.addEventListener("keyup", function(event) {
 });
 
 function updatePlayer() {
-  if (gamePaused) return;
+  if (gamePaused) {
+    updateTwirl();
+    return;
+  }
 
   if (keys["ArrowRight"]) player.x += player.speed;
   if (keys["ArrowLeft"]) player.x -= player.speed;
@@ -289,7 +295,7 @@ function updateLives() {
 }
 
 function checkPipeTrigger() {
-  if (event1Shown) return;
+  if (event1Shown || twirlActive) return;
 
   const nearPipe =
     player.x + player.width > pipe.x - 10 &&
@@ -297,8 +303,22 @@ function checkPipeTrigger() {
     player.y + player.height >= pipe.y;
 
   if (nearPipe) {
-    event1Shown = true;
     gamePaused = true;
+    twirlActive = true;
+    twirlTimer = 150;
+    player.x = pipe.x - 55;
+    player.y = 420 - player.height;
+  }
+}
+
+function updateTwirl() {
+  if (!twirlActive) return;
+
+  twirlTimer--;
+
+  if (twirlTimer <= 0) {
+    twirlActive = false;
+    event1Shown = true;
     score += 300;
     updateScore();
 
@@ -349,8 +369,14 @@ function drawGame() {
   drawDiamond();
   drawEnemies();
   drawPipe();
-  drawPartner();
-  drawPlayer();
+
+  if (twirlActive) {
+    drawTwirlScene();
+  } else {
+    drawPartner();
+    drawPlayer();
+  }
+
   drawSparkleMessage();
 }
 
@@ -442,38 +468,95 @@ function drawPartner() {
   const partnerX = pipe.x + 15 - cameraX;
   const partnerY = pipe.y - 55;
 
-  context.fillStyle = selectedSide === "groom" ? "#ff8fab" : "#1f2a44";
-  context.fillRect(partnerX, partnerY, 40, 55);
-
-  context.fillStyle = "#ffd6a5";
-  context.fillRect(partnerX + 8, partnerY + 5, 24, 20);
+  drawCharacter(partnerX, partnerY, 40, 55, selectedSide === "groom" ? "#ff8fab" : "#1f2a44");
 
   if (diamondCollected) {
-    context.fillStyle = "#b9f2ff";
-    context.beginPath();
-    context.moveTo(partnerX + 20, partnerY - 15);
-    context.lineTo(partnerX + 32, partnerY);
-    context.lineTo(partnerX + 8, partnerY);
-    context.closePath();
-    context.fill();
+    drawSmallDiamond(partnerX + 10, partnerY - 18);
   }
 }
 
 function drawPlayer() {
-  const context = ctx();
-
-  context.fillStyle = selectedSide === "groom" ? "#1f2a44" : "#ff8fab";
-  context.fillRect(player.x - cameraX, player.y, player.width, player.height);
-
-  context.fillStyle = "#ffd6a5";
-  context.fillRect(player.x - cameraX + 8, player.y + 5, 24, 20);
+  drawCharacter(
+    player.x - cameraX,
+    player.y,
+    player.width,
+    player.height,
+    selectedSide === "groom" ? "#1f2a44" : "#ff8fab"
+  );
 
   if (player.isBig) {
+    const context = ctx();
     context.fillStyle = "rgba(255, 255, 255, 0.6)";
     context.fillRect(player.x - cameraX - 4, player.y - 4, 6, 6);
     context.fillRect(player.x - cameraX + player.width + 2, player.y + 12, 6, 6);
     context.fillRect(player.x - cameraX + 18, player.y - 10, 6, 6);
   }
+}
+
+function drawTwirlScene() {
+  const context = ctx();
+
+  const centerX = pipe.x - cameraX;
+  const centerY = 370;
+  const angle = twirlTimer * 0.18;
+  const radius = 28;
+
+  const x1 = centerX + Math.cos(angle) * radius;
+  const y1 = centerY + Math.sin(angle) * 8;
+
+  const x2 = centerX + Math.cos(angle + Math.PI) * radius;
+  const y2 = centerY + Math.sin(angle + Math.PI) * 8;
+
+  drawCharacter(x1, y1, player.width, player.height, selectedSide === "groom" ? "#1f2a44" : "#ff8fab");
+  drawCharacter(x2, y2, 40, 55, selectedSide === "groom" ? "#ff8fab" : "#1f2a44");
+
+  drawSmallDiamond(centerX - 10, centerY - 55);
+
+  for (let i = 0; i < 10; i++) {
+    const sparkleAngle = angle + i * 0.7;
+    const sx = centerX + Math.cos(sparkleAngle) * (45 + i);
+    const sy = centerY + Math.sin(sparkleAngle) * (25 + i / 2);
+
+    context.fillStyle = i % 2 === 0 ? "#fff7b2" : "#b9f2ff";
+    context.fillRect(sx, sy, 5, 5);
+  }
+
+  context.fillStyle = "rgba(0, 0, 0, 0.55)";
+  context.fillRect(300, 35, 300, 45);
+
+  context.fillStyle = "#fff7b2";
+  context.font = "22px Arial";
+  context.fillText("A Wedding Moment...", 340, 65);
+}
+
+function drawCharacter(x, y, width, height, bodyColor) {
+  const context = ctx();
+
+  context.fillStyle = bodyColor;
+  context.fillRect(x, y, width, height);
+
+  context.fillStyle = "#ffd6a5";
+  context.fillRect(x + width * 0.2, y + 5, width * 0.6, height * 0.32);
+
+  context.fillStyle = "#222";
+  context.fillRect(x + width * 0.33, y + 15, 4, 4);
+  context.fillRect(x + width * 0.62, y + 15, 4, 4);
+}
+
+function drawSmallDiamond(x, y) {
+  const context = ctx();
+
+  context.fillStyle = "#b9f2ff";
+  context.beginPath();
+  context.moveTo(x + 12, y);
+  context.lineTo(x + 24, y + 10);
+  context.lineTo(x + 12, y + 24);
+  context.lineTo(x, y + 10);
+  context.closePath();
+  context.fill();
+
+  context.strokeStyle = "#ffffff";
+  context.stroke();
 }
 
 function drawSparkleMessage() {
