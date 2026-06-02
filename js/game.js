@@ -113,8 +113,17 @@ let enemies = [
 ];
 
 function selectSide(side) {
+
   selectedSide = side;
-  alert(side === "groom" ? "Groom Side selected 🤵" : "Bride Side selected 👰");
+
+  const status = document.getElementById("selectionStatus");
+
+  if(side === "groom"){
+    status.innerText = "✓ Team Groom Selected";
+  } else {
+    status.innerText = "✓ Team Bride Selected";
+  }
+
 }
 
 function startGame() {
