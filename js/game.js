@@ -20,8 +20,11 @@ const coupleNames = {
   bride: "Jane"
 };
 
-const canvas = () => document.getElementById("gameCanvas");
-const ctx = () => canvas().getContext("2d");
+const groomSprite = new Image();
+groomSprite.src = "assets/characters/groom.png";
+
+const brideSprite = new Image();
+brideSprite.src = "assets/characters/bride.png";
 
 let player = {
   x: 80,
@@ -887,25 +890,53 @@ function drawTwirlScene() {
 function drawPlayer() {
   const isPlayerMale = selectedSide === "groom";
 
-  drawCharacter(player.x - cameraX, player.y, player.width, player.height, isPlayerMale ? "#1f2a44" : "#ff8fab");
+  drawCharacter(
+  player.x - cameraX,
+  player.y,
+  player.width,
+  player.height,
+  isPlayerMale ? "#1f2a44" : "#ff8fab",
+  isPlayerMale ? "groom" : "bride"
+);
 
   if (event1Shown) {
     drawConstantGlow(player.x - cameraX + player.width / 2, player.y + player.height / 2);
   }
 }
 
-function drawCharacter(x, y, width, height, bodyColor) {
+function drawCharacter(x, y, width, height, bodyColor, characterType = null) {
   const context = ctx();
+
+  let sprite = null;
+
+  if (characterType === "groom") {
+    sprite = groomSprite;
+  }
+
+  if (characterType === "bride") {
+    sprite = brideSprite;
+  }
+
+  if (sprite && sprite.complete) {
+    context.drawImage(
+      sprite,
+      0,
+      0,
+      128,
+      128,
+      x,
+      y,
+      width,
+      height
+    );
+    return;
+  }
 
   context.fillStyle = bodyColor;
   context.fillRect(x, y, width, height);
 
   context.fillStyle = "#ffd6a5";
   context.fillRect(x + width * 0.2, y + 5, width * 0.6, height * 0.32);
-
-  context.fillStyle = "#222";
-  context.fillRect(x + width * 0.33, y + 15, 4, 4);
-  context.fillRect(x + width * 0.62, y + 15, 4, 4);
 }
 
 function drawRotatingDiamond(centerX, centerY, size, angle) {
