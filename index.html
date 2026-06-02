@@ -7,18 +7,25 @@
 
 <body>
 
-  <h1>Wedding Platformer Invite</h1>
+  <div id="startScreen">
+    <h1>Wedding Platformer Invite</h1>
 
-  <button>Groom Side</button>
-  <button>Bride Side</button>
+    <button onclick="selectSide('groom')">Groom Side 🤵</button>
+    <button onclick="selectSide('bride')">Bride Side 👰</button>
 
-  <br><br>
+    <br><br>
 
-  <input type="text" placeholder="Enter Player Name">
+    <input id="playerName" type="text" placeholder="Enter Player Name">
 
-  <br><br>
+    <br><br>
 
-  <button>Start Game</button>
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="gameScreen" style="display:none;">
+    <h2 id="welcomeText"></h2>
+    <p>Game has started 🎮</p>
+  </div>
 
   <script src="js/game.js"></script>
 
