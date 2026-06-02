@@ -1,7 +1,10 @@
 let selectedSide = "";
 let playerName = "";
 let score = 0;
+let lives = 3;
 let cameraX = 0;
+let gamePaused = false;
+let event1Shown = false;
 
 const canvas = () => document.getElementById("gameCanvas");
 const ctx = () => canvas().getContext("2d");
@@ -18,7 +21,7 @@ let player = {
 
 let keys = {};
 
-const levelWidth = 1800;
+const levelWidth = 2000;
 
 const platforms = [
   { x: 250, y: 340, width: 150, height: 25 },
@@ -48,7 +51,9 @@ let enemies = [
     height: 40,
     direction: 1,
     speed: 1.5,
-    alive: true
+    alive: true,
+    minX: 550,
+    maxX: 750
   },
   {
     x: 1250,
@@ -57,9 +62,18 @@ let enemies = [
     height: 40,
     direction: -1,
     speed: 1.5,
-    alive: true
+    alive: true,
+    minX: 1180,
+    maxX: 1380
   }
 ];
+
+const pipe = {
+  x: 1550,
+  y: 330,
+  width: 70,
+  height: 90
+};
 
 function selectSide(side) {
   selectedSide = side;
@@ -91,7 +105,7 @@ function startGame() {
 document.addEventListener("keydown", function(event) {
   keys[event.key] = true;
 
-  if ((event.code === "Space" || event.key === "ArrowUp") && !player.jumping) {
+  if ((event.code === "Space" || event.key === "ArrowUp") && !player.jumping && !gamePaused) {
     player.velocityY = -14;
     player.jumping = true;
   }
@@ -102,6 +116,8 @@ document.addEventListener("keyup", function(event) {
 });
 
 function updatePlayer() {
+  if (gamePaused) return;
+
   if (keys["ArrowRight"]) player.x += player.speed;
   if (keys["ArrowLeft"]) player.x -= player.speed;
 
@@ -141,11 +157,11 @@ function updatePlayer() {
   updateCamera();
   collectCoins();
   updateEnemies();
+  checkPipeTrigger();
 }
 
 function updateCamera() {
   const c = canvas();
-
   cameraX = player.x - c.width / 2 + player.width / 2;
 
   if (cameraX < 0) cameraX = 0;
@@ -166,19 +182,19 @@ function collectCoins() {
     if (distance < coin.radius + 25) {
       coin.collected = true;
       score += 10;
-      document.getElementById("score").innerText = score;
+      updateScore();
     }
   });
 }
+
 function updateEnemies() {
   enemies.forEach(enemy => {
-
     if (!enemy.alive) return;
 
     enemy.x += enemy.speed * enemy.direction;
 
-    if (enemy.x < 550) enemy.direction = 1;
-    if (enemy.x > 750) enemy.direction = -1;
+    if (enemy.x < enemy.minX) enemy.direction = 1;
+    if (enemy.x > enemy.maxX) enemy.direction = -1;
 
     const playerBottom = player.y + player.height;
 
@@ -189,56 +205,71 @@ function updateEnemies() {
       playerBottom > enemy.y;
 
     if (collision) {
-
-      const stomp =
-        player.velocityY > 0 &&
-        playerBottom < enemy.y + 20;
+      const stomp = player.velocityY > 0 && playerBottom < enemy.y + 20;
 
       if (stomp) {
         enemy.alive = false;
         score += 100;
-        document.getElementById("score").innerText = score;
+        updateScore();
         player.velocityY = -8;
       } else {
-        player.x = 80;
-        player.y = 360;
+        loseLife();
       }
     }
   });
 }
 
-function drawEnemies() {
-  const context = ctx();
+function loseLife() {
+  lives--;
+  updateLives();
 
-  enemies.forEach(enemy => {
+  if (lives <= 0) {
+    alert("Game Over! Restarting.");
+    location.reload();
+    return;
+  }
 
-    if (!enemy.alive) return;
+  player.x = 80;
+  player.y = 360;
+  player.velocityY = 0;
+  cameraX = 0;
+}
 
-    context.fillStyle = "#8b0000";
+function updateScore() {
+  document.getElementById("score").innerText = score;
+}
 
-    context.fillRect(
-      enemy.x - cameraX,
-      enemy.y,
-      enemy.width,
-      enemy.height
-    );
+function updateLives() {
+  document.getElementById("lives").innerText = "❤️".repeat(lives);
+}
 
-    context.fillStyle = "white";
+function checkPipeTrigger() {
+  if (event1Shown) return;
 
-    context.fillRect(
-      enemy.x - cameraX + 5,
-      enemy.y + 8,
-      6,
-      6
-    );
+  const nearPipe =
+    player.x + player.width > pipe.x - 10 &&
+    player.x < pipe.x + pipe.width + 10 &&
+    player.y + player.height >= pipe.y;
 
-    context.fillRect(
-      enemy.x - cameraX + 24,
-      enemy.y + 8,
-      6,
-      6
-    );
-  });
+  if (nearPipe) {
+    event1Shown = true;
+    gamePaused = true;
+    score += 300;
+    updateScore();
+
+    document.getElementById("eventTitle").innerText = "Sangeet Night";
+    document.getElementById("eventDate").innerText = "12 December 2026";
+    document.getElementById("eventTime").innerText = "7:00 PM onwards";
+    document.getElementById("eventVenue").innerText = "Grand Ballroom";
+
+    document.getElementById("eventOverlay").classList.remove("hidden");
+  }
+}
+
+function closeEvent() {
+  document.getElementById("eventOverlay").classList.add("hidden");
+  gamePaused = false;
+  player.x = pipe.x + pipe.width + 30;
 }
 
 function drawGame() {
@@ -247,48 +278,49 @@ function drawGame() {
 
   context.clearRect(0, 0, c.width, c.height);
 
-  // sky
   context.fillStyle = "#79c9ff";
   context.fillRect(0, 0, c.width, c.height);
 
-  // moving clouds
   drawCloud(120, 80);
   drawCloud(500, 90);
   drawCloud(760, 70);
   drawCloud(1100, 85);
   drawCloud(1500, 75);
 
-  // ground
   context.fillStyle = "#8b5a2b";
   context.fillRect(-cameraX, 420, levelWidth, 80);
 
   context.fillStyle = "#3cb043";
   context.fillRect(-cameraX, 420, levelWidth, 15);
 
-  // simple tile lines
   for (let x = 0; x < levelWidth; x += 40) {
     context.strokeStyle = "#6b3f1d";
     context.strokeRect(x - cameraX, 420, 40, 40);
     context.strokeRect(x - cameraX, 460, 40, 40);
   }
 
+  drawPlatforms();
+  drawCoins();
+  drawEnemies();
+  drawPipe();
+  drawPartner();
+  drawPlayer();
+}
+
+function drawPlatforms() {
+  const context = ctx();
+
   platforms.forEach(platform => {
     context.fillStyle = "#b5651d";
-    context.fillRect(
-      platform.x - cameraX,
-      platform.y,
-      platform.width,
-      platform.height
-    );
+    context.fillRect(platform.x - cameraX, platform.y, platform.width, platform.height);
 
     context.strokeStyle = "#6b3f1d";
-    context.strokeRect(
-      platform.x - cameraX,
-      platform.y,
-      platform.width,
-      platform.height
-    );
+    context.strokeRect(platform.x - cameraX, platform.y, platform.width, platform.height);
   });
+}
+
+function drawCoins() {
+  const context = ctx();
 
   coins.forEach(coin => {
     if (!coin.collected) {
@@ -301,12 +333,66 @@ function drawGame() {
       context.stroke();
     }
   });
-  drawEnemies();
-  // player
+}
+
+function drawEnemies() {
+  const context = ctx();
+
+  enemies.forEach(enemy => {
+    if (!enemy.alive) return;
+
+    context.fillStyle = "#8b0000";
+    context.fillRect(enemy.x - cameraX, enemy.y, enemy.width, enemy.height);
+
+    context.fillStyle = "white";
+    context.fillRect(enemy.x - cameraX + 5, enemy.y + 8, 6, 6);
+    context.fillRect(enemy.x - cameraX + 24, enemy.y + 8, 6, 6);
+  });
+}
+
+function drawPipe() {
+  const context = ctx();
+
+  context.fillStyle = "#0b8f2a";
+  context.fillRect(pipe.x - cameraX, pipe.y, pipe.width, pipe.height);
+
+  context.fillStyle = "#10b33f";
+  context.fillRect(pipe.x - cameraX - 10, pipe.y, pipe.width + 20, 20);
+
+  context.strokeStyle = "#064d18";
+  context.strokeRect(pipe.x - cameraX, pipe.y, pipe.width, pipe.height);
+  context.strokeRect(pipe.x - cameraX - 10, pipe.y, pipe.width + 20, 20);
+}
+
+function drawPartner() {
+  if (event1Shown) return;
+
+  const context = ctx();
+
+  const partnerX = pipe.x + 15 - cameraX;
+  const partnerY = pipe.y - 55;
+
+  context.fillStyle = selectedSide === "groom" ? "#ff8fab" : "#1f2a44";
+  context.fillRect(partnerX, partnerY, 40, 55);
+
+  context.fillStyle = "#ffd6a5";
+  context.fillRect(partnerX + 8, partnerY + 5, 24, 20);
+
+  context.fillStyle = "#b9f2ff";
+  context.beginPath();
+  context.moveTo(partnerX + 20, partnerY - 15);
+  context.lineTo(partnerX + 32, partnerY);
+  context.lineTo(partnerX + 8, partnerY);
+  context.closePath();
+  context.fill();
+}
+
+function drawPlayer() {
+  const context = ctx();
+
   context.fillStyle = selectedSide === "groom" ? "#1f2a44" : "#ff8fab";
   context.fillRect(player.x - cameraX, player.y, player.width, player.height);
 
-  // face
   context.fillStyle = "#ffd6a5";
   context.fillRect(player.x - cameraX + 8, player.y + 5, 24, 20);
 }
