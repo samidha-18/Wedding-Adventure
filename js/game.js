@@ -25,8 +25,8 @@ const ctx = () => canvas().getContext("2d");
 let player = {
   x: 80,
   y: 360,
-  width: 40,
-  height: 55,
+  width: 34,
+  height: 50,
   speed: 5,
   velocityY: 0,
   jumping: false
@@ -34,11 +34,11 @@ let player = {
 
 let keys = {};
 
-const levelWidth = 2400;
+const levelWidth = 2500;
 
 const diamond = {
-  x: 430,
-  y: 360,
+  x: 875,
+  y: 130,
   width: 32,
   height: 32,
   collected: false
@@ -52,31 +52,29 @@ const pipe = {
 };
 
 const platforms = [
-  { x: 250, y: 340, width: 150, height: 25 },
-  { x: 500, y: 280, width: 150, height: 25 },
-  { x: 750, y: 220, width: 150, height: 25 },
-  { x: 1050, y: 330, width: 160, height: 25 },
-  { x: 1350, y: 270, width: 160, height: 25 }
+  { x: 250, y: 260, width: 160, height: 40 },
+  { x: 650, y: 220, width: 160, height: 40 },
+  { x: 1050, y: 180, width: 160, height: 40 },
+  { x: 1280, y: 300, width: 160, height: 40 }
 ];
 
 let questionBlocks = [
-  { x: 360, y: 260, width: 40, height: 40, used: false, reward: "coin" },
-  { x: 680, y: 300, width: 40, height: 40, used: false, reward: "coin" },
-  { x: 1120, y: 250, width: 40, height: 40, used: false, reward: "coin" }
+  { x: 310, y: 180, width: 40, height: 40, used: false, reward: "coin" },
+  { x: 710, y: 140, width: 40, height: 40, used: false, reward: "coin" },
+  { x: 1110, y: 100, width: 40, height: 40, used: false, reward: "coin" }
 ];
 
 let floatingRewards = [];
 
 let coins = [
-  { x: 280, y: 295, radius: 12, collected: false },
-  { x: 340, y: 295, radius: 12, collected: false },
-  { x: 530, y: 235, radius: 12, collected: false },
-  { x: 590, y: 235, radius: 12, collected: false },
-  { x: 790, y: 175, radius: 12, collected: false },
-  { x: 1085, y: 285, radius: 12, collected: false },
-  { x: 1150, y: 285, radius: 12, collected: false },
-  { x: 1390, y: 225, radius: 12, collected: false },
-  { x: 1460, y: 225, radius: 12, collected: false }
+  { x: 280, y: 215, radius: 12, collected: false },
+  { x: 340, y: 215, radius: 12, collected: false },
+  { x: 680, y: 175, radius: 12, collected: false },
+  { x: 740, y: 175, radius: 12, collected: false },
+  { x: 1085, y: 135, radius: 12, collected: false },
+  { x: 1150, y: 135, radius: 12, collected: false },
+  { x: 1390, y: 255, radius: 12, collected: false },
+  { x: 1460, y: 255, radius: 12, collected: false }
 ];
 
 let enemies = [
@@ -90,19 +88,21 @@ let enemies = [
     speed: 1.5,
     alive: true,
     minX: 550,
-    maxX: 750
+    maxX: 800,
+    hitsRemaining: 1
   },
   {
     id: "pipeGuard",
     x: 1380,
-    y: 380,
-    width: 38,
-    height: 42,
+    y: 378,
+    width: 42,
+    height: 44,
     direction: -1,
-    speed: 1.6,
+    speed: 2.8,
     alive: true,
-    minX: 1280,
-    maxX: 1480
+    minX: 1200,
+    maxX: 1520,
+    hitsRemaining: 2
   }
 ];
 
@@ -125,11 +125,11 @@ function startGame() {
   }
 
   if (selectedSide === "groom") {
-    player.width = 48;
-    player.height = 70;
-  } else {
     player.width = 40;
-    player.height = 55;
+    player.height = 58;
+  } else {
+    player.width = 34;
+    player.height = 50;
   }
 
   player.y = 420 - player.height;
@@ -355,10 +355,18 @@ function updateEnemies() {
       const stomp = player.velocityY > 0 && playerBottom < enemy.y + 20;
 
       if (stomp) {
-        enemy.alive = false;
-        score += enemy.id === "pipeGuard" ? 200 : 100;
-        updateScore();
-        player.velocityY = -8;
+        enemy.hitsRemaining--;
+        player.velocityY = -9;
+
+        if (enemy.hitsRemaining <= 0) {
+          enemy.alive = false;
+          score += enemy.id === "pipeGuard" ? 250 : 100;
+          updateScore();
+        } else {
+          score += 75;
+          updateScore();
+          enemy.direction *= -1;
+        }
       } else {
         loseLife();
       }
@@ -476,9 +484,8 @@ function drawGame() {
   context.fillRect(-cameraX, 420, levelWidth, 15);
 
   for (let x = 0; x < levelWidth; x += 40) {
-    context.strokeStyle = "#6b3f1d";
-    context.strokeRect(x - cameraX, 420, 40, 40);
-    context.strokeRect(x - cameraX, 460, 40, 40);
+    drawSquareBlock(x, 420, "#8b5a2b");
+    drawSquareBlock(x, 460, "#8b5a2b");
   }
 
   drawPlatforms();
@@ -508,15 +515,24 @@ function drawGame() {
   drawSparkleMessage();
 }
 
-function drawPlatforms() {
+function drawSquareBlock(x, y, color) {
   const context = ctx();
 
-  platforms.forEach(platform => {
-    context.fillStyle = "#b5651d";
-    context.fillRect(platform.x - cameraX, platform.y, platform.width, platform.height);
+  context.fillStyle = color;
+  context.fillRect(x - cameraX, y, 40, 40);
 
-    context.strokeStyle = "#6b3f1d";
-    context.strokeRect(platform.x - cameraX, platform.y, platform.width, platform.height);
+  context.strokeStyle = "#6b3f1d";
+  context.strokeRect(x - cameraX, y, 40, 40);
+
+  context.fillStyle = "rgba(255,255,255,0.12)";
+  context.fillRect(x - cameraX + 4, y + 4, 10, 10);
+}
+
+function drawPlatforms() {
+  platforms.forEach(platform => {
+    for (let x = 0; x < platform.width; x += 40) {
+      drawSquareBlock(platform.x + x, platform.y, "#b5651d");
+    }
   });
 }
 
@@ -593,6 +609,10 @@ function drawEnemies() {
     if (enemy.id === "pipeGuard") {
       context.fillStyle = "#ffd700";
       context.fillRect(enemy.x - cameraX + 8, enemy.y - 8, enemy.width - 16, 6);
+
+      context.fillStyle = "#fff7b2";
+      context.font = "12px Arial";
+      context.fillText(enemy.hitsRemaining + "x", enemy.x - cameraX + 10, enemy.y - 12);
     }
   });
 }
@@ -639,8 +659,8 @@ function drawPartnerPopBehindPipe() {
   const isPartnerMale = selectedSide === "bride";
   const partnerName = isPartnerMale ? coupleNames.groom : coupleNames.bride;
 
-  const partnerW = isPartnerMale ? 48 : 40;
-  const partnerH = isPartnerMale ? 70 : 55;
+  const partnerW = isPartnerMale ? 40 : 34;
+  const partnerH = isPartnerMale ? 58 : 50;
 
   const progress = Math.min(pipeSceneTimer / 100, 1);
 
@@ -650,13 +670,7 @@ function drawPartnerPopBehindPipe() {
   const partnerX = pipe.x + pipe.width / 2 - partnerW / 2 - cameraX;
   const partnerY = startY + (endY - startY) * progress;
 
-  drawCharacter(
-    partnerX,
-    partnerY,
-    partnerW,
-    partnerH,
-    isPartnerMale ? "#1f2a44" : "#ff8fab"
-  );
+  drawCharacter(partnerX, partnerY, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
 
   if (progress > 0.75) {
     context.fillStyle = "rgba(0, 0, 0, 0.55)";
@@ -675,8 +689,8 @@ function drawHandoffScene() {
   const playerX = pipe.x - player.width - 10 - cameraX;
   const playerY = pipe.y - player.height;
 
-  const partnerW = isPartnerMale ? 48 : 40;
-  const partnerH = isPartnerMale ? 70 : 55;
+  const partnerW = isPartnerMale ? 40 : 34;
+  const partnerH = isPartnerMale ? 58 : 50;
 
   const partnerX = pipe.x + pipe.width / 2 - partnerW / 2 - cameraX;
   const partnerY = pipe.y - partnerH;
@@ -711,11 +725,11 @@ function drawTwirlScene() {
   const isPlayerMale = selectedSide === "groom";
   const isPartnerMale = selectedSide === "bride";
 
-  const playerW = isPlayerMale ? 48 : 40;
-  const playerH = isPlayerMale ? 70 : 55;
+  const playerW = isPlayerMale ? 40 : 34;
+  const playerH = isPlayerMale ? 58 : 50;
 
-  const partnerW = isPartnerMale ? 48 : 40;
-  const partnerH = isPartnerMale ? 70 : 55;
+  const partnerW = isPartnerMale ? 40 : 34;
+  const partnerH = isPartnerMale ? 58 : 50;
 
   const playerX = centerX - playerW - 4 + sway;
   const playerY = baseY - playerH + bounce;
@@ -727,14 +741,14 @@ function drawTwirlScene() {
   drawCharacter(partnerX, partnerY, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
 
   const diamondX = centerX - 12;
-  const diamondY = baseY - 95 + Math.sin(t * 0.04) * 5;
+  const diamondY = baseY - 82 + Math.sin(t * 0.04) * 5;
 
   drawSmallDiamond(diamondX, diamondY);
   drawBlinkGlow(centerX, baseY - 35);
 
   for (let i = 0; i < 6; i++) {
     const sparkleX = centerX - 45 + i * 18;
-    const sparkleY = baseY - 85 + Math.sin(t * 0.06 + i) * 8;
+    const sparkleY = baseY - 72 + Math.sin(t * 0.06 + i) * 8;
 
     context.fillStyle = i % 2 === 0 ? "#fff7b2" : "#b9f2ff";
     context.fillRect(sparkleX, sparkleY, 4, 4);
@@ -751,13 +765,7 @@ function drawTwirlScene() {
 function drawPlayer() {
   const isPlayerMale = selectedSide === "groom";
 
-  drawCharacter(
-    player.x - cameraX,
-    player.y,
-    player.width,
-    player.height,
-    isPlayerMale ? "#1f2a44" : "#ff8fab"
-  );
+  drawCharacter(player.x - cameraX, player.y, player.width, player.height, isPlayerMale ? "#1f2a44" : "#ff8fab");
 
   if (event1Shown) {
     drawConstantGlow(player.x - cameraX + player.width / 2, player.y + player.height / 2);
