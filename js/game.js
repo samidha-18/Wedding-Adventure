@@ -488,6 +488,8 @@ function drawPipeScene() {
 }
 
 function drawPartnerPop() {
+  const context = ctx();
+
   const isPartnerMale = selectedSide === "bride";
 
   const partnerW = isPartnerMale ? 48 : 40;
@@ -495,12 +497,13 @@ function drawPartnerPop() {
 
   const progress = Math.min(pipeSceneTimer / 90, 1);
 
-  const startY = pipe.y + 20;
-  const endY = pipe.y - partnerH;
+  const startY = pipe.y + 30;
+  const endY = pipe.y - partnerH + 5;
 
   const partnerX = pipe.x + pipe.width / 2 - partnerW / 2 - cameraX;
   const partnerY = startY + (endY - startY) * progress;
 
+  // Draw partner first
   drawCharacter(
     partnerX,
     partnerY,
@@ -508,6 +511,13 @@ function drawPartnerPop() {
     partnerH,
     isPartnerMale ? "#1f2a44" : "#ff8fab"
   );
+
+  // Redraw pipe lip over partner so partner appears behind pipe
+  context.fillStyle = "#10b33f";
+  context.fillRect(pipe.x - cameraX - 10, pipe.y, pipe.width + 20, 20);
+
+  context.strokeStyle = "#064d18";
+  context.strokeRect(pipe.x - cameraX - 10, pipe.y, pipe.width + 20, 20);
 }
 
 function drawHandoffScene() {
@@ -545,10 +555,13 @@ function drawTwirlScene() {
   const context = ctx();
 
   const centerX = pipe.x + pipe.width / 2 - cameraX;
-  const centerY = pipe.y - 35;
+  const baseY = pipe.y - 72;
 
-  const angle = pipeSceneTimer * 0.18;
-  const radius = 28;
+  const t = pipeSceneTimer;
+
+  // slower rhythm
+  const sway = Math.sin(t * 0.08) * 12;
+  const bounce = Math.abs(Math.sin(t * 0.08)) * 6;
 
   const isPlayerMale = selectedSide === "groom";
   const isPartnerMale = selectedSide === "bride";
@@ -559,18 +572,51 @@ function drawTwirlScene() {
   const partnerW = isPartnerMale ? 48 : 40;
   const partnerH = isPartnerMale ? 70 : 55;
 
-  const x1 = centerX + Math.cos(angle) * radius - playerW / 2;
-  const y1 = centerY + Math.sin(angle) * 8 - playerH / 2;
+  const playerX = centerX - playerW - 4 + sway;
+  const playerY = baseY - playerH + bounce;
 
-  const x2 = centerX + Math.cos(angle + Math.PI) * radius - partnerW / 2;
-  const y2 = centerY + Math.sin(angle + Math.PI) * 8 - partnerH / 2;
+  const partnerX = centerX + 4 - sway;
+  const partnerY = baseY - partnerH + bounce;
 
-  drawCharacter(x1, y1, playerW, playerH, isPlayerMale ? "#1f2a44" : "#ff8fab");
-  drawCharacter(x2, y2, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
+  drawCharacter(
+    playerX,
+    playerY,
+    playerW,
+    playerH,
+    isPlayerMale ? "#1f2a44" : "#ff8fab"
+  );
 
-  drawSmallDiamond(centerX - 12, centerY - 60);
-  drawBlinkGlow(centerX, centerY);
+  drawCharacter(
+    partnerX,
+    partnerY,
+    partnerW,
+    partnerH,
+    isPartnerMale ? "#1f2a44" : "#ff8fab"
+  );
 
+  // diamond gently floats between them
+  const diamondX = centerX - 12;
+  const diamondY = baseY - 95 + Math.sin(t * 0.06) * 5;
+
+  drawSmallDiamond(diamondX, diamondY);
+  drawBlinkGlow(centerX, baseY - 35);
+
+  // subtle rhythm sparkles
+  for (let i = 0; i < 6; i++) {
+    const sparkleX = centerX - 45 + i * 18;
+    const sparkleY = baseY - 85 + Math.sin(t * 0.08 + i) * 8;
+
+    context.fillStyle = i % 2 === 0 ? "#fff7b2" : "#b9f2ff";
+    context.fillRect(sparkleX, sparkleY, 4, 4);
+  }
+
+  context.fillStyle = "rgba(0, 0, 0, 0.55)";
+  context.fillRect(300, 35, 300, 45);
+
+  context.fillStyle = "#fff7b2";
+  context.font = "22px Arial";
+  context.fillText("A Wedding Moment...", 340, 65);
+}
   for (let i = 0; i < 10; i++) {
     const sparkleAngle = angle + i * 0.7;
     const sx = centerX + Math.cos(sparkleAngle) * (45 + i);
