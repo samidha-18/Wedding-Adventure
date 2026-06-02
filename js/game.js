@@ -19,6 +19,10 @@ let player = {
   y: 360,
   width: 40,
   height: 55,
+  normalWidth: 40,
+  normalHeight: 55,
+  bigWidth: 55,
+  bigHeight: 75,
   speed: 5,
   velocityY: 0,
   jumping: false,
@@ -116,15 +120,6 @@ function startGame() {
   gameLoop();
 }
 
-if (selectedSide === "groom") {
-  player.width = 48;
-  player.height = 70;
-} else {
-  player.width = 40;
-  player.height = 55;
-}
-
-player.y = 420 - player.height;
 document.addEventListener("keydown", function(event) {
   keys[event.key] = true;
 
@@ -234,14 +229,8 @@ function collectDiamond() {
     const oldHeight = player.height;
 
     player.isBig = true;
-
-if (selectedSide === "groom") {
-  player.width = 58;
-  player.height = 84;
-} else {
-  player.width = 44;
-  player.height = 61;
-}
+    player.width = player.bigWidth;
+    player.height = player.bigHeight;
 
     player.y -= player.height - oldHeight;
 
@@ -472,89 +461,56 @@ function drawPipe() {
 }
 
 function drawPartner() {
-  if (event1Shown || twirlActive) return;
-
-  const partnerIsVisible = player.x > pipe.x - 260;
-  if (!partnerIsVisible) return;
+  if (event1Shown) return;
 
   const context = ctx();
 
-  const isPartnerMale = selectedSide === "bride";
+  const partnerX = pipe.x + 15 - cameraX;
+  const partnerY = pipe.y - 55;
 
-  const partnerWidth = isPartnerMale ? 48 : 40;
-  const partnerHeight = isPartnerMale ? 70 : 55;
-
-  const partnerX = pipe.x + pipe.width / 2 - partnerWidth / 2 - cameraX;
-  const partnerY = pipe.y - partnerHeight;
-
-  drawCharacter(
-    partnerX,
-    partnerY,
-    partnerWidth,
-    partnerHeight,
-    isPartnerMale ? "#1f2a44" : "#ff8fab"
-  );
+  drawCharacter(partnerX, partnerY, 40, 55, selectedSide === "groom" ? "#ff8fab" : "#1f2a44");
 
   if (diamondCollected) {
-    drawSmallDiamond(partnerX + partnerWidth / 2 - 12, partnerY - 28);
-    drawBlinkGlow(partnerX + partnerWidth / 2, partnerY + partnerHeight / 2);
+    drawSmallDiamond(partnerX + 10, partnerY - 18);
   }
+}
 
 function drawPlayer() {
-  const isPlayerMale = selectedSide === "groom";
-
   drawCharacter(
     player.x - cameraX,
     player.y,
     player.width,
     player.height,
-    isPlayerMale ? "#1f2a44" : "#ff8fab"
+    selectedSide === "groom" ? "#1f2a44" : "#ff8fab"
   );
 
-  if (diamondCollected && !event1Shown) {
-    drawBlinkGlow(
-      player.x - cameraX + player.width / 2,
-      player.y + player.height / 2
-    );
-  }
-
-  if (event1Shown) {
-    drawConstantGlow(
-      player.x - cameraX + player.width / 2,
-      player.y + player.height / 2
-    );
+  if (player.isBig) {
+    const context = ctx();
+    context.fillStyle = "rgba(255, 255, 255, 0.6)";
+    context.fillRect(player.x - cameraX - 4, player.y - 4, 6, 6);
+    context.fillRect(player.x - cameraX + player.width + 2, player.y + 12, 6, 6);
+    context.fillRect(player.x - cameraX + 18, player.y - 10, 6, 6);
   }
 }
 
 function drawTwirlScene() {
   const context = ctx();
 
-  const centerX = pipe.x + pipe.width / 2 - cameraX;
-  const centerY = pipe.y - 45;
-
+  const centerX = pipe.x - cameraX;
+  const centerY = 370;
   const angle = twirlTimer * 0.18;
-  const radius = 26;
+  const radius = 28;
 
-  const isPlayerMale = selectedSide === "groom";
-  const isPartnerMale = selectedSide === "bride";
+  const x1 = centerX + Math.cos(angle) * radius;
+  const y1 = centerY + Math.sin(angle) * 8;
 
-  const playerW = isPlayerMale ? 58 : 44;
-  const playerH = isPlayerMale ? 84 : 61;
+  const x2 = centerX + Math.cos(angle + Math.PI) * radius;
+  const y2 = centerY + Math.sin(angle + Math.PI) * 8;
 
-  const partnerW = isPartnerMale ? 48 : 40;
-  const partnerH = isPartnerMale ? 70 : 55;
+  drawCharacter(x1, y1, player.width, player.height, selectedSide === "groom" ? "#1f2a44" : "#ff8fab");
+  drawCharacter(x2, y2, 40, 55, selectedSide === "groom" ? "#ff8fab" : "#1f2a44");
 
-  const x1 = centerX + Math.cos(angle) * radius - playerW / 2;
-  const y1 = centerY + Math.sin(angle) * 8 - playerH / 2;
-
-  const x2 = centerX + Math.cos(angle + Math.PI) * radius - partnerW / 2;
-  const y2 = centerY + Math.sin(angle + Math.PI) * 8 - partnerH / 2;
-
-  drawCharacter(x1, y1, playerW, playerH, isPlayerMale ? "#1f2a44" : "#ff8fab");
-  drawCharacter(x2, y2, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
-
-  drawSmallDiamond(centerX - 12, centerY - 60);
-  drawBlinkGlow(centerX, centerY);
+  drawSmallDiamond(centerX - 10, centerY - 55);
 
   for (let i = 0; i < 10; i++) {
     const sparkleAngle = angle + i * 0.7;
@@ -615,26 +571,7 @@ function drawSparkleMessage() {
   context.font = "24px Arial";
   context.fillText("The Sparkle Begins...", 330, 68);
 }
-function drawBlinkGlow(x, y) {
-  const context = ctx();
 
-  const blink = Math.floor(Date.now() / 250) % 2 === 0;
-  if (!blink) return;
-
-  context.beginPath();
-  context.fillStyle = "rgba(185, 242, 255, 0.28)";
-  context.arc(x, y, 42, 0, Math.PI * 2);
-  context.fill();
-}
-
-function drawConstantGlow(x, y) {
-  const context = ctx();
-
-  context.beginPath();
-  context.fillStyle = "rgba(255, 247, 178, 0.25)";
-  context.arc(x, y, 45, 0, Math.PI * 2);
-  context.fill();
-}
 function drawCloud(x, y) {
   const context = ctx();
 
