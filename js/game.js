@@ -9,6 +9,7 @@ let event1Shown = false;
 
 let diamondOwner = "none";
 let sparkleMessageTimer = 0;
+let diamondMessage = "";
 
 let pipeSceneActive = false;
 let pipeSceneStage = "";
@@ -395,9 +396,14 @@ function collectDiamond() {
   if (collision) {
     diamond.collected = true;
     diamondOwner = "player";
-    score += 250;
-    updateScore();
-    sparkleMessageTimer = 160;
+
+score += 250;
+updateScore();
+
+sparkleMessageTimer = 160;
+
+diamondMessage =
+  "Aha! Now We're Ready.";
   }
 }
 
@@ -751,7 +757,7 @@ function drawPipeLockMessage() {
     const context = ctx();
 
     context.fillStyle = "rgba(0, 0, 0, 0.55)";
-    context.fillRect(245, 35, 410, 50);
+    context.fillRect(245, 35, 560, 70);
 
     context.fillStyle = "#fff7b2";
     context.font = "20px Arial";
@@ -760,7 +766,7 @@ function drawPipeLockMessage() {
   ? "Defeat that stupid bridesmaid to find Jane!"
   : "Defeat that stupid groomsmen to find John!";
 
-    context.fillText(message, 315, 67);
+    context.fillText(message, 250, 72);
   }
 }
 
@@ -951,7 +957,7 @@ function drawSparkleMessage() {
 
   context.fillStyle = "#fff7b2";
   context.font = "24px Arial";
-  context.fillText("The Diamond Is Yours...", 320, 68);
+  context.fillText(diamondMessage, 300, 68);
 }
 
 function drawCloud(x, y) {
