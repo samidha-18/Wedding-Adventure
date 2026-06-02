@@ -729,13 +729,10 @@ function drawPipeLockMessage() {
 
     context.fillStyle = "#fff7b2";
     context.font = "20px Arial";
-    context.fillText("Defeat the guard to find Jane", 345, 67);
 
     const message = selectedSide === "groom"
   ? "Defeat the guard to find Jane"
   : "Defeat the guard to find John!";
-
-context.fillText(message, 335, 67);
   }
 }
 
