@@ -757,8 +757,8 @@ function drawPipeLockMessage() {
     context.font = "20px Arial";
 
     const message = selectedSide === "groom"
-  ? "Defeat the guard to find Jane"
-  : "Defeat the guard to find John!";
+  ? "Defeat that stupid bridesmaid to find Jane!"
+  : "Defeat that stupid groomsmen to find John!";
 
     context.fillText(message, 315, 67);
   }
