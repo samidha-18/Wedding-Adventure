@@ -14,6 +14,11 @@ let pipeSceneActive = false;
 let pipeSceneStage = "";
 let pipeSceneTimer = 0;
 
+const coupleNames = {
+  groom: "John",
+  bride: "Jane"
+};
+
 const canvas = () => document.getElementById("gameCanvas");
 const ctx = () => canvas().getContext("2d");
 
@@ -831,13 +836,6 @@ function drawSparkleMessage() {
   context.fillStyle = "#fff7b2";
   context.font = "24px Arial";
   context.fillText("The Diamond Is Yours...", 320, 68);
-}
-
-  if (!isPipeUnlocked() && player.x > 1200) {
-    context.fillText("Pipe guard blocks the way!", 315, 68);
-  } else {
-    context.fillText("The Sparkle Begins...", 330, 68);
-  }
 }
 
 function drawCloud(x, y) {
