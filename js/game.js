@@ -894,67 +894,19 @@ function drawCharacter(x, y, width, height, bodyColor) {
 }
 
 function drawRotatingDiamond(centerX, centerY, size, angle) {
-
   const context = ctx();
 
   context.save();
-
   context.translate(centerX, centerY);
-  context.rotate(angle);
 
-  // outer gem
-  context.beginPath();
+  const pulse = 1 + Math.sin(Date.now() / 180) * 0.12;
+  context.scale(pulse, pulse);
 
-  context.moveTo(0, -size);
-  context.lineTo(size * 0.75, -size * 0.25);
-  context.lineTo(size * 0.55, size * 0.75);
-  context.lineTo(0, size);
-  context.lineTo(-size * 0.55, size * 0.75);
-  context.lineTo(-size * 0.75, -size * 0.25);
+  context.font = `${size * 2}px Arial`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
 
-  context.closePath();
-
-  const gradient = context.createLinearGradient(
-    -size,
-    -size,
-    size,
-    size
-  );
-
-  gradient.addColorStop(0, "#ffffff");
-  gradient.addColorStop(0.3, "#dff8ff");
-  gradient.addColorStop(0.6, "#8fe8ff");
-  gradient.addColorStop(1, "#4bc8ff");
-
-  context.fillStyle = gradient;
-  context.fill();
-
-  context.strokeStyle = "#ffffff";
-  context.lineWidth = 2;
-
-  context.stroke();
-
-  // facets
-
-  context.beginPath();
-
-  context.moveTo(0, -size);
-  context.lineTo(0, size);
-
-  context.moveTo(-size * 0.75, -size * 0.25);
-  context.lineTo(0, 0);
-
-  context.lineTo(size * 0.75, -size * 0.25);
-
-  context.moveTo(-size * 0.55, size * 0.75);
-  context.lineTo(0, 0);
-
-  context.lineTo(size * 0.55, size * 0.75);
-
-  context.strokeStyle = "rgba(255,255,255,0.7)";
-  context.lineWidth = 1;
-
-  context.stroke();
+  context.fillText("💎", 0, 0);
 
   context.restore();
 }
