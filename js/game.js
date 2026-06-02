@@ -658,10 +658,27 @@ function drawDiamondInLevel() {
   if (diamond.collected) return;
 
   const t = Date.now() / 220;
-  const scale = 1 + Math.sin(t) * 0.18;
+  const scale = 1 + Math.sin(t) * 0.25;
   const angle = t * 0.8;
 
   drawRotatingDiamond(diamond.x - cameraX + 12, diamond.y + 12, 16 * scale, angle);
+}
+
+for(let i=0;i<4;i++){
+
+  const sparkleAngle = t + i * Math.PI/2;
+
+  const sx =
+    diamond.x - cameraX + 12 +
+    Math.cos(sparkleAngle) * 28;
+
+  const sy =
+    diamond.y + 12 +
+    Math.sin(sparkleAngle) * 28;
+
+  ctx().fillStyle = "#ffffff";
+
+  ctx().fillRect(sx, sy, 3, 3);
 }
 
 function drawDiamondFollowingPlayer() {
@@ -877,22 +894,66 @@ function drawCharacter(x, y, width, height, bodyColor) {
 }
 
 function drawRotatingDiamond(centerX, centerY, size, angle) {
+
   const context = ctx();
 
   context.save();
+
   context.translate(centerX, centerY);
   context.rotate(angle);
 
-  context.fillStyle = "#b9f2ff";
+  // outer gem
   context.beginPath();
+
   context.moveTo(0, -size);
-  context.lineTo(size, 0);
+  context.lineTo(size * 0.75, -size * 0.25);
+  context.lineTo(size * 0.55, size * 0.75);
   context.lineTo(0, size);
-  context.lineTo(-size, 0);
+  context.lineTo(-size * 0.55, size * 0.75);
+  context.lineTo(-size * 0.75, -size * 0.25);
+
   context.closePath();
+
+  const gradient = context.createLinearGradient(
+    -size,
+    -size,
+    size,
+    size
+  );
+
+  gradient.addColorStop(0, "#ffffff");
+  gradient.addColorStop(0.3, "#dff8ff");
+  gradient.addColorStop(0.6, "#8fe8ff");
+  gradient.addColorStop(1, "#4bc8ff");
+
+  context.fillStyle = gradient;
   context.fill();
 
   context.strokeStyle = "#ffffff";
+  context.lineWidth = 2;
+
+  context.stroke();
+
+  // facets
+
+  context.beginPath();
+
+  context.moveTo(0, -size);
+  context.lineTo(0, size);
+
+  context.moveTo(-size * 0.75, -size * 0.25);
+  context.lineTo(0, 0);
+
+  context.lineTo(size * 0.75, -size * 0.25);
+
+  context.moveTo(-size * 0.55, size * 0.75);
+  context.lineTo(0, 0);
+
+  context.lineTo(size * 0.55, size * 0.75);
+
+  context.strokeStyle = "rgba(255,255,255,0.7)";
+  context.lineWidth = 1;
+
   context.stroke();
 
   context.restore();
