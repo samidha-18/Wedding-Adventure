@@ -1,6 +1,7 @@
 let selectedSide = "";
 let playerName = "";
 let score = 0;
+let cameraX = 0;
 
 const canvas = () => document.getElementById("gameCanvas");
 const ctx = () => canvas().getContext("2d");
@@ -17,10 +18,14 @@ let player = {
 
 let keys = {};
 
+const levelWidth = 1800;
+
 const platforms = [
   { x: 250, y: 340, width: 150, height: 25 },
   { x: 500, y: 280, width: 150, height: 25 },
-  { x: 750, y: 220, width: 150, height: 25 }
+  { x: 750, y: 220, width: 150, height: 25 },
+  { x: 1050, y: 330, width: 160, height: 25 },
+  { x: 1350, y: 270, width: 160, height: 25 }
 ];
 
 let coins = [
@@ -28,7 +33,11 @@ let coins = [
   { x: 340, y: 295, radius: 12, collected: false },
   { x: 530, y: 235, radius: 12, collected: false },
   { x: 590, y: 235, radius: 12, collected: false },
-  { x: 790, y: 175, radius: 12, collected: false }
+  { x: 790, y: 175, radius: 12, collected: false },
+  { x: 1085, y: 285, radius: 12, collected: false },
+  { x: 1150, y: 285, radius: 12, collected: false },
+  { x: 1390, y: 225, radius: 12, collected: false },
+  { x: 1460, y: 225, radius: 12, collected: false }
 ];
 
 function selectSide(side) {
@@ -72,13 +81,11 @@ document.addEventListener("keyup", function(event) {
 });
 
 function updatePlayer() {
-  if (keys["ArrowRight"]) {
-    player.x += player.speed;
-  }
+  if (keys["ArrowRight"]) player.x += player.speed;
+  if (keys["ArrowLeft"]) player.x -= player.speed;
 
-  if (keys["ArrowLeft"]) {
-    player.x -= player.speed;
-  }
+  if (player.x < 0) player.x = 0;
+  if (player.x + player.width > levelWidth) player.x = levelWidth - player.width;
 
   player.velocityY += 0.7;
   player.y += player.velocityY;
@@ -110,7 +117,17 @@ function updatePlayer() {
     }
   });
 
+  updateCamera();
   collectCoins();
+}
+
+function updateCamera() {
+  const c = canvas();
+
+  cameraX = player.x - c.width / 2 + player.width / 2;
+
+  if (cameraX < 0) cameraX = 0;
+  if (cameraX > levelWidth - c.width) cameraX = levelWidth - c.width;
 }
 
 function collectCoins() {
@@ -138,32 +155,54 @@ function drawGame() {
 
   context.clearRect(0, 0, c.width, c.height);
 
+  // sky
   context.fillStyle = "#79c9ff";
   context.fillRect(0, 0, c.width, c.height);
 
+  // moving clouds
   drawCloud(120, 80);
   drawCloud(500, 90);
   drawCloud(760, 70);
+  drawCloud(1100, 85);
+  drawCloud(1500, 75);
 
+  // ground
   context.fillStyle = "#8b5a2b";
-  context.fillRect(0, 420, c.width, 80);
+  context.fillRect(-cameraX, 420, levelWidth, 80);
 
   context.fillStyle = "#3cb043";
-  context.fillRect(0, 420, c.width, 15);
+  context.fillRect(-cameraX, 420, levelWidth, 15);
+
+  // simple tile lines
+  for (let x = 0; x < levelWidth; x += 40) {
+    context.strokeStyle = "#6b3f1d";
+    context.strokeRect(x - cameraX, 420, 40, 40);
+    context.strokeRect(x - cameraX, 460, 40, 40);
+  }
 
   platforms.forEach(platform => {
     context.fillStyle = "#b5651d";
-    context.fillRect(platform.x, platform.y, platform.width, platform.height);
+    context.fillRect(
+      platform.x - cameraX,
+      platform.y,
+      platform.width,
+      platform.height
+    );
 
     context.strokeStyle = "#6b3f1d";
-    context.strokeRect(platform.x, platform.y, platform.width, platform.height);
+    context.strokeRect(
+      platform.x - cameraX,
+      platform.y,
+      platform.width,
+      platform.height
+    );
   });
 
   coins.forEach(coin => {
     if (!coin.collected) {
       context.beginPath();
       context.fillStyle = "#ffd700";
-      context.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+      context.arc(coin.x - cameraX, coin.y, coin.radius, 0, Math.PI * 2);
       context.fill();
 
       context.strokeStyle = "#b8860b";
@@ -171,11 +210,13 @@ function drawGame() {
     }
   });
 
+  // player
   context.fillStyle = selectedSide === "groom" ? "#1f2a44" : "#ff8fab";
-  context.fillRect(player.x, player.y, player.width, player.height);
+  context.fillRect(player.x - cameraX, player.y, player.width, player.height);
 
+  // face
   context.fillStyle = "#ffd6a5";
-  context.fillRect(player.x + 8, player.y + 5, 24, 20);
+  context.fillRect(player.x - cameraX + 8, player.y + 5, 24, 20);
 }
 
 function drawCloud(x, y) {
@@ -183,9 +224,9 @@ function drawCloud(x, y) {
 
   context.fillStyle = "white";
   context.beginPath();
-  context.arc(x, y, 22, 0, Math.PI * 2);
-  context.arc(x + 25, y - 10, 25, 0, Math.PI * 2);
-  context.arc(x + 55, y, 22, 0, Math.PI * 2);
+  context.arc(x - cameraX * 0.3, y, 22, 0, Math.PI * 2);
+  context.arc(x + 25 - cameraX * 0.3, y - 10, 25, 0, Math.PI * 2);
+  context.arc(x + 55 - cameraX * 0.3, y, 22, 0, Math.PI * 2);
   context.fill();
 }
 
