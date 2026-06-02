@@ -1,9 +1,13 @@
 body {
+  margin: 0;
   background: #5c94fc;
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   text-align: center;
   color: white;
-  padding-top: 50px;
+}
+
+#startScreen {
+  padding-top: 80px;
 }
 
 button {
@@ -18,4 +22,17 @@ button {
 input {
   padding: 12px;
   font-size: 18px;
+}
+
+#hud {
+  display: flex;
+  justify-content: space-between;
+  max-width: 900px;
+  margin: 20px auto 10px;
+  font-size: 20px;
+}
+
+canvas {
+  background: #79c9ff;
+  border: 4px solid white;
 }
