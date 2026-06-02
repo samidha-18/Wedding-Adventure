@@ -59,9 +59,9 @@ const platforms = [
 ];
 
 let questionBlocks = [
-  { x: 320, y: 240, width: 40, height: 40, used: false, reward: "coin" },
-  { x: 710, y: 200, width: 40, height: 40, used: false, reward: "coin" },
-  { x: 1110, y: 160, width: 40, height: 40, used: false, reward: "coin" }
+  { x: 320, y: 200, width: 40, height: 40, used: false, reward: "coin" },
+  { x: 710, y: 160, width: 40, height: 40, used: false, reward: "coin" },
+  { x: 1110, y: 120, width: 40, height: 40, used: false, reward: "coin" }
 ];
 
 let secretBlocks = [
@@ -729,7 +729,13 @@ function drawPipeLockMessage() {
 
     context.fillStyle = "#fff7b2";
     context.font = "20px Arial";
-    context.fillText("Defeat the guard to unlock the pipe!", 285, 67);
+    context.fillText("Defeat the guard to find Jane", 345, 67);
+
+    const message = selectedSide === "groom"
+  ? "Defeat the guard to find Jane"
+  : "Defeat the guard to find John!";
+
+context.fillText(message, 335, 67);
   }
 }
 
