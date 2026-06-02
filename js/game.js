@@ -5,6 +5,8 @@ let lives = 3;
 let cameraX = 0;
 let gamePaused = false;
 let event1Shown = false;
+let diamondCollected = false;
+let sparkleMessageTimer = 0;
 
 const canvas = () => document.getElementById("gameCanvas");
 const ctx = () => canvas().getContext("2d");
@@ -14,14 +16,27 @@ let player = {
   y: 360,
   width: 40,
   height: 55,
+  normalWidth: 40,
+  normalHeight: 55,
+  bigWidth: 55,
+  bigHeight: 75,
   speed: 5,
   velocityY: 0,
-  jumping: false
+  jumping: false,
+  isBig: false
 };
 
 let keys = {};
 
 const levelWidth = 2000;
+
+const diamond = {
+  x: 430,
+  y: 360,
+  width: 32,
+  height: 32,
+  collected: false
+};
 
 const platforms = [
   { x: 250, y: 340, width: 150, height: 25 },
@@ -154,8 +169,11 @@ function updatePlayer() {
     }
   });
 
+  if (sparkleMessageTimer > 0) sparkleMessageTimer--;
+
   updateCamera();
   collectCoins();
+  collectDiamond();
   updateEnemies();
   checkPipeTrigger();
 }
@@ -185,6 +203,33 @@ function collectCoins() {
       updateScore();
     }
   });
+}
+
+function collectDiamond() {
+  if (diamond.collected) return;
+
+  const collision =
+    player.x < diamond.x + diamond.width &&
+    player.x + player.width > diamond.x &&
+    player.y < diamond.y + diamond.height &&
+    player.y + player.height > diamond.y;
+
+  if (collision) {
+    diamond.collected = true;
+    diamondCollected = true;
+    score += 250;
+    updateScore();
+
+    const oldHeight = player.height;
+
+    player.isBig = true;
+    player.width = player.bigWidth;
+    player.height = player.bigHeight;
+
+    player.y -= player.height - oldHeight;
+
+    sparkleMessageTimer = 160;
+  }
 }
 
 function updateEnemies() {
@@ -301,10 +346,12 @@ function drawGame() {
 
   drawPlatforms();
   drawCoins();
+  drawDiamond();
   drawEnemies();
   drawPipe();
   drawPartner();
   drawPlayer();
+  drawSparkleMessage();
 }
 
 function drawPlatforms() {
@@ -333,6 +380,29 @@ function drawCoins() {
       context.stroke();
     }
   });
+}
+
+function drawDiamond() {
+  if (diamond.collected) return;
+
+  const context = ctx();
+  const x = diamond.x - cameraX;
+  const y = diamond.y;
+
+  context.fillStyle = "#b9f2ff";
+  context.beginPath();
+  context.moveTo(x + diamond.width / 2, y);
+  context.lineTo(x + diamond.width, y + 12);
+  context.lineTo(x + diamond.width / 2, y + diamond.height);
+  context.lineTo(x, y + 12);
+  context.closePath();
+  context.fill();
+
+  context.strokeStyle = "#ffffff";
+  context.stroke();
+
+  context.fillStyle = "white";
+  context.fillRect(x + 12, y + 8, 8, 4);
 }
 
 function drawEnemies() {
@@ -378,13 +448,15 @@ function drawPartner() {
   context.fillStyle = "#ffd6a5";
   context.fillRect(partnerX + 8, partnerY + 5, 24, 20);
 
-  context.fillStyle = "#b9f2ff";
-  context.beginPath();
-  context.moveTo(partnerX + 20, partnerY - 15);
-  context.lineTo(partnerX + 32, partnerY);
-  context.lineTo(partnerX + 8, partnerY);
-  context.closePath();
-  context.fill();
+  if (diamondCollected) {
+    context.fillStyle = "#b9f2ff";
+    context.beginPath();
+    context.moveTo(partnerX + 20, partnerY - 15);
+    context.lineTo(partnerX + 32, partnerY);
+    context.lineTo(partnerX + 8, partnerY);
+    context.closePath();
+    context.fill();
+  }
 }
 
 function drawPlayer() {
@@ -395,6 +467,26 @@ function drawPlayer() {
 
   context.fillStyle = "#ffd6a5";
   context.fillRect(player.x - cameraX + 8, player.y + 5, 24, 20);
+
+  if (player.isBig) {
+    context.fillStyle = "rgba(255, 255, 255, 0.6)";
+    context.fillRect(player.x - cameraX - 4, player.y - 4, 6, 6);
+    context.fillRect(player.x - cameraX + player.width + 2, player.y + 12, 6, 6);
+    context.fillRect(player.x - cameraX + 18, player.y - 10, 6, 6);
+  }
+}
+
+function drawSparkleMessage() {
+  if (sparkleMessageTimer <= 0) return;
+
+  const context = ctx();
+
+  context.fillStyle = "rgba(0, 0, 0, 0.55)";
+  context.fillRect(285, 35, 330, 50);
+
+  context.fillStyle = "#fff7b2";
+  context.font = "24px Arial";
+  context.fillText("The Sparkle Begins...", 330, 68);
 }
 
 function drawCloud(x, y) {
