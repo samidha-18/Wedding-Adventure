@@ -7,7 +7,7 @@ let cameraX = 0;
 let gamePaused = false;
 let event1Shown = false;
 
-let diamondOwner = "none"; 
+let diamondOwner = "none";
 let sparkleMessageTimer = 0;
 
 let pipeSceneActive = false;
@@ -29,11 +29,22 @@ let player = {
 
 let keys = {};
 
-const levelWidth = 2200;
+const levelWidth = 2400;
 
-const diamond = { x: 430, y: 360, width: 32, height: 32, collected: false };
+const diamond = {
+  x: 430,
+  y: 360,
+  width: 32,
+  height: 32,
+  collected: false
+};
 
-const pipe = { x: 1550, y: 330, width: 70, height: 90 };
+const pipe = {
+  x: 1550,
+  y: 330,
+  width: 70,
+  height: 90
+};
 
 const platforms = [
   { x: 250, y: 340, width: 150, height: 25 },
@@ -42,6 +53,14 @@ const platforms = [
   { x: 1050, y: 330, width: 160, height: 25 },
   { x: 1350, y: 270, width: 160, height: 25 }
 ];
+
+let questionBlocks = [
+  { x: 360, y: 260, width: 40, height: 40, used: false, reward: "coin" },
+  { x: 680, y: 300, width: 40, height: 40, used: false, reward: "coin" },
+  { x: 1120, y: 250, width: 40, height: 40, used: false, reward: "coin" }
+];
+
+let floatingRewards = [];
 
 let coins = [
   { x: 280, y: 295, radius: 12, collected: false },
@@ -56,8 +75,30 @@ let coins = [
 ];
 
 let enemies = [
-  { x: 650, y: 380, width: 35, height: 40, direction: 1, speed: 1.5, alive: true, minX: 550, maxX: 750 },
-  { x: 1250, y: 380, width: 35, height: 40, direction: -1, speed: 1.5, alive: true, minX: 1180, maxX: 1380 }
+  {
+    id: "enemy1",
+    x: 650,
+    y: 380,
+    width: 35,
+    height: 40,
+    direction: 1,
+    speed: 1.5,
+    alive: true,
+    minX: 550,
+    maxX: 750
+  },
+  {
+    id: "pipeGuard",
+    x: 1380,
+    y: 380,
+    width: 38,
+    height: 42,
+    direction: -1,
+    speed: 1.6,
+    alive: true,
+    minX: 1280,
+    maxX: 1480
+  }
 ];
 
 function selectSide(side) {
@@ -122,6 +163,8 @@ function updatePlayer() {
   if (player.x < 0) player.x = 0;
   if (player.x + player.width > levelWidth) player.x = levelWidth - player.width;
 
+  blockPipeIfGuardAlive();
+
   player.velocityY += 0.7;
   player.y += player.velocityY;
 
@@ -133,6 +176,32 @@ function updatePlayer() {
     player.jumping = false;
   }
 
+  handlePlatformLanding();
+  handleQuestionBlockHit();
+
+  if (sparkleMessageTimer > 0) sparkleMessageTimer--;
+
+  updateFloatingRewards();
+  updateCamera();
+  collectCoins();
+  collectDiamond();
+  updateEnemies();
+  checkPipeTrigger();
+}
+
+function blockPipeIfGuardAlive() {
+  const pipeGuard = enemies.find(enemy => enemy.id === "pipeGuard");
+
+  if (pipeGuard && pipeGuard.alive) {
+    const pipeWallX = pipe.x - 18;
+
+    if (player.x + player.width > pipeWallX) {
+      player.x = pipeWallX - player.width;
+    }
+  }
+}
+
+function handlePlatformLanding() {
   platforms.forEach(platform => {
     const isFalling = player.velocityY >= 0;
     const playerBottom = player.y + player.height;
@@ -152,18 +221,76 @@ function updatePlayer() {
     }
   });
 
-  if (sparkleMessageTimer > 0) sparkleMessageTimer--;
+  questionBlocks.forEach(block => {
+    const isFalling = player.velocityY >= 0;
+    const playerBottom = player.y + player.height;
+    const previousBottom = playerBottom - player.velocityY;
 
-  updateCamera();
-  collectCoins();
-  collectDiamond();
-  updateEnemies();
-  checkPipeTrigger();
+    const landsOnBlock =
+      player.x < block.x + block.width &&
+      player.x + player.width > block.x &&
+      playerBottom >= block.y &&
+      previousBottom <= block.y &&
+      isFalling;
+
+    if (landsOnBlock) {
+      player.y = block.y - player.height;
+      player.velocityY = 0;
+      player.jumping = false;
+    }
+  });
+}
+
+function handleQuestionBlockHit() {
+  questionBlocks.forEach(block => {
+    if (block.used) return;
+
+    const playerTop = player.y;
+    const previousTop = playerTop - player.velocityY;
+
+    const hitsFromBelow =
+      player.x < block.x + block.width &&
+      player.x + player.width > block.x &&
+      playerTop <= block.y + block.height &&
+      previousTop >= block.y + block.height &&
+      player.velocityY < 0;
+
+    if (hitsFromBelow) {
+      block.used = true;
+      player.velocityY = 3;
+
+      score += 50;
+      updateScore();
+
+      floatingRewards.push({
+        x: block.x + block.width / 2,
+        y: block.y,
+        startY: block.y,
+        timer: 0,
+        type: block.reward
+      });
+    }
+  });
+}
+
+function updateFloatingRewards() {
+  floatingRewards.forEach(reward => {
+    reward.timer++;
+    reward.y = reward.startY - Math.sin(Math.min(reward.timer / 35, 1) * Math.PI) * 45;
+
+    if (reward.timer === 35) {
+      score += 10;
+      updateScore();
+    }
+  });
+
+  floatingRewards = floatingRewards.filter(reward => reward.timer < 60);
 }
 
 function updateCamera() {
   const c = canvas();
   cameraX = player.x - c.width / 2 + player.width / 2;
+
   if (cameraX < 0) cameraX = 0;
   if (cameraX > levelWidth - c.width) cameraX = levelWidth - c.width;
 }
@@ -207,6 +334,7 @@ function updateEnemies() {
     if (!enemy.alive) return;
 
     enemy.x += enemy.speed * enemy.direction;
+
     if (enemy.x < enemy.minX) enemy.direction = 1;
     if (enemy.x > enemy.maxX) enemy.direction = -1;
 
@@ -223,9 +351,13 @@ function updateEnemies() {
 
       if (stomp) {
         enemy.alive = false;
-        score += 100;
+        score += enemy.id === "pipeGuard" ? 200 : 100;
         updateScore();
         player.velocityY = -8;
+
+        if (enemy.id === "pipeGuard") {
+          sparkleMessageTimer = 120;
+        }
       } else {
         loseLife();
       }
@@ -257,8 +389,14 @@ function updateLives() {
   document.getElementById("lives").innerText = "❤️".repeat(lives);
 }
 
+function isPipeUnlocked() {
+  const pipeGuard = enemies.find(enemy => enemy.id === "pipeGuard");
+  return pipeGuard && !pipeGuard.alive;
+}
+
 function checkPipeTrigger() {
   if (event1Shown || pipeSceneActive) return;
+  if (!isPipeUnlocked()) return;
 
   const nearPipe =
     player.x + player.width > pipe.x - 10 &&
@@ -328,6 +466,7 @@ function drawGame() {
   drawCloud(760, 70);
   drawCloud(1100, 85);
   drawCloud(1500, 75);
+  drawCloud(1950, 95);
 
   context.fillStyle = "#8b5a2b";
   context.fillRect(-cameraX, 420, levelWidth, 80);
@@ -342,6 +481,8 @@ function drawGame() {
   }
 
   drawPlatforms();
+  drawQuestionBlocks();
+  drawFloatingRewards();
   drawCoins();
   drawDiamondInLevel();
   drawEnemies();
@@ -362,6 +503,7 @@ function drawGame() {
     }
   }
 
+  drawPipeLockMessage();
   drawSparkleMessage();
 }
 
@@ -371,24 +513,52 @@ function drawPlatforms() {
   platforms.forEach(platform => {
     context.fillStyle = "#b5651d";
     context.fillRect(platform.x - cameraX, platform.y, platform.width, platform.height);
+
     context.strokeStyle = "#6b3f1d";
     context.strokeRect(platform.x - cameraX, platform.y, platform.width, platform.height);
   });
 }
 
-function drawCoins() {
+function drawQuestionBlocks() {
   const context = ctx();
 
+  questionBlocks.forEach(block => {
+    context.fillStyle = block.used ? "#a06a2a" : "#f6b93b";
+    context.fillRect(block.x - cameraX, block.y, block.width, block.height);
+
+    context.strokeStyle = "#7a4b12";
+    context.strokeRect(block.x - cameraX, block.y, block.width, block.height);
+
+    context.fillStyle = block.used ? "#6b3f1d" : "#ffffff";
+    context.font = "28px Arial";
+    context.fillText(block.used ? "•" : "?", block.x - cameraX + 11, block.y + 30);
+  });
+}
+
+function drawFloatingRewards() {
+  floatingRewards.forEach(reward => {
+    drawCoinShape(reward.x - cameraX, reward.y, 11);
+  });
+}
+
+function drawCoins() {
   coins.forEach(coin => {
     if (!coin.collected) {
-      context.beginPath();
-      context.fillStyle = "#ffd700";
-      context.arc(coin.x - cameraX, coin.y, coin.radius, 0, Math.PI * 2);
-      context.fill();
-      context.strokeStyle = "#b8860b";
-      context.stroke();
+      drawCoinShape(coin.x - cameraX, coin.y, coin.radius);
     }
   });
+}
+
+function drawCoinShape(x, y, radius) {
+  const context = ctx();
+
+  context.beginPath();
+  context.fillStyle = "#ffd700";
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.fill();
+
+  context.strokeStyle = "#b8860b";
+  context.stroke();
 }
 
 function drawDiamondInLevel() {
@@ -412,12 +582,17 @@ function drawEnemies() {
   enemies.forEach(enemy => {
     if (!enemy.alive) return;
 
-    context.fillStyle = "#8b0000";
+    context.fillStyle = enemy.id === "pipeGuard" ? "#5b1a8b" : "#8b0000";
     context.fillRect(enemy.x - cameraX, enemy.y, enemy.width, enemy.height);
 
     context.fillStyle = "white";
     context.fillRect(enemy.x - cameraX + 5, enemy.y + 8, 6, 6);
-    context.fillRect(enemy.x - cameraX + 24, enemy.y + 8, 6, 6);
+    context.fillRect(enemy.x - cameraX + enemy.width - 11, enemy.y + 8, 6, 6);
+
+    if (enemy.id === "pipeGuard") {
+      context.fillStyle = "#ffd700";
+      context.fillRect(enemy.x - cameraX + 8, enemy.y - 8, enemy.width - 16, 6);
+    }
   });
 }
 
@@ -433,6 +608,28 @@ function drawPipe() {
   context.strokeStyle = "#064d18";
   context.strokeRect(pipe.x - cameraX, pipe.y, pipe.width, pipe.height);
   context.strokeRect(pipe.x - cameraX - 10, pipe.y, pipe.width + 20, 20);
+
+  if (!isPipeUnlocked()) {
+    context.fillStyle = "rgba(255, 0, 0, 0.3)";
+    context.fillRect(pipe.x - cameraX - 18, pipe.y - 10, 8, pipe.height + 20);
+  }
+}
+
+function drawPipeLockMessage() {
+  if (isPipeUnlocked() || pipeSceneActive || event1Shown) return;
+
+  const distanceToPipe = Math.abs((player.x + player.width) - pipe.x);
+
+  if (distanceToPipe < 180) {
+    const context = ctx();
+
+    context.fillStyle = "rgba(0, 0, 0, 0.6)";
+    context.fillRect(240, 35, 420, 50);
+
+    context.fillStyle = "#fff7b2";
+    context.font = "20px Arial";
+    context.fillText("Defeat the pipe guard first!", 330, 67);
+  }
 }
 
 function drawPipeScene() {
@@ -618,7 +815,12 @@ function drawSparkleMessage() {
 
   context.fillStyle = "#fff7b2";
   context.font = "24px Arial";
-  context.fillText("The Sparkle Begins...", 330, 68);
+
+  if (!isPipeUnlocked() && player.x > 1200) {
+    context.fillText("Pipe guard blocks the way!", 315, 68);
+  } else {
+    context.fillText("The Sparkle Begins...", 330, 68);
+  }
 }
 
 function drawCloud(x, y) {
