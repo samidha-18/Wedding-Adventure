@@ -39,6 +39,25 @@ let player = {
   jumping: false
 };
 
+const visualScale = 1.65;
+
+function getCharacterDrawSize(type, powered = false) {
+  const isGroom = type === "groom";
+
+  let width = isGroom ? 40 : 34;
+  let height = isGroom ? 58 : 50;
+
+  if (powered) {
+    width *= 1.25;
+    height *= 1.25;
+  }
+
+  return {
+    width: width * visualScale,
+    height: height * visualScale
+  };
+}
+
 let keys = {};
 
 const levelWidth = 2500;
@@ -786,54 +805,89 @@ function drawPipeScene() {
 function drawPartnerPopBehindPipe() {
   const context = ctx();
 
-  const isPartnerMale = selectedSide === "bride";
-  const partnerName = isPartnerMale ? coupleNames.groom : coupleNames.bride;
+  const partnerType = selectedSide === "bride" ? "groom" : "bride";
+  const partnerName = partnerType === "groom" ? coupleNames.groom : coupleNames.bride;
 
-  const partnerW = isPartnerMale ? 40 : 34;
-  const partnerH = isPartnerMale ? 58 : 50;
+  const baseW = partnerType === "groom" ? 40 : 34;
+  const baseH = partnerType === "groom" ? 58 : 50;
+  const size = getCharacterDrawSize(partnerType, false);
 
   const progress = Math.min(pipeSceneTimer / 100, 1);
 
   const startY = pipe.y + 25;
-  const endY = pipe.y - partnerH + 5;
+  const endY = pipe.y - baseH + 5;
 
-  const partnerX = pipe.x + pipe.width / 2 - partnerW / 2 - cameraX;
-  const partnerY = startY + (endY - startY) * progress;
+  const collisionX = pipe.x + pipe.width / 2 - baseW / 2;
+  const collisionY = startY + (endY - startY) * progress;
 
-  drawCharacter(partnerX, partnerY, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
+  const partnerX = collisionX - cameraX + baseW / 2 - size.width / 2;
+  const partnerY = collisionY + baseH - size.height;
+
+  drawCharacter(
+    partnerX,
+    partnerY,
+    size.width,
+    size.height,
+    partnerType === "groom" ? "#1f2a44" : "#ff8fab",
+    partnerType
+  );
 
   if (progress > 0.75) {
     context.fillStyle = "rgba(0, 0, 0, 0.55)";
-    context.fillRect(partnerX - 18, partnerY - 32, partnerW + 36, 24);
+    context.fillRect(partnerX - 10, partnerY - 30, size.width + 20, 24);
 
     context.fillStyle = "#fff7b2";
     context.font = "16px Arial";
-    context.fillText(partnerName, partnerX - 5, partnerY - 14);
+    context.fillText(partnerName, partnerX + 8, partnerY - 13);
   }
 }
 
 function drawHandoffScene() {
-  const isPlayerMale = selectedSide === "groom";
-  const isPartnerMale = selectedSide === "bride";
+  const playerType = selectedSide === "groom" ? "groom" : "bride";
+  const partnerType = selectedSide === "bride" ? "groom" : "bride";
 
-  const playerX = pipe.x - player.width - 10 - cameraX;
-  const playerY = pipe.y - player.height;
+  const playerSize = getCharacterDrawSize(playerType, true);
+  const partnerSize = getCharacterDrawSize(partnerType, false);
 
-  const partnerW = isPartnerMale ? 40 : 34;
-  const partnerH = isPartnerMale ? 58 : 50;
+  const playerCollisionX = pipe.x - player.width - 10;
+  const playerCollisionY = pipe.y - player.height;
 
-  const partnerX = pipe.x + pipe.width / 2 - partnerW / 2 - cameraX;
-  const partnerY = pipe.y - partnerH;
+  const partnerBaseW = partnerType === "groom" ? 40 : 34;
+  const partnerBaseH = partnerType === "groom" ? 58 : 50;
 
-  drawCharacter(playerX, playerY, player.width, player.height, isPlayerMale ? "#1f2a44" : "#ff8fab");
-  drawCharacter(partnerX, partnerY, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
+  const partnerCollisionX = pipe.x + pipe.width / 2 - partnerBaseW / 2;
+  const partnerCollisionY = pipe.y - partnerBaseH;
+
+  const playerDrawX = playerCollisionX - cameraX + player.width / 2 - playerSize.width / 2;
+  const playerDrawY = playerCollisionY + player.height - playerSize.height;
+
+  const partnerDrawX = partnerCollisionX - cameraX + partnerBaseW / 2 - partnerSize.width / 2;
+  const partnerDrawY = partnerCollisionY + partnerBaseH - partnerSize.height;
+
+  drawCharacter(
+    playerDrawX,
+    playerDrawY,
+    playerSize.width,
+    playerSize.height,
+    playerType === "groom" ? "#1f2a44" : "#ff8fab",
+    playerType
+  );
+
+  drawCharacter(
+    partnerDrawX,
+    partnerDrawY,
+    partnerSize.width,
+    partnerSize.height,
+    partnerType === "groom" ? "#1f2a44" : "#ff8fab",
+    partnerType
+  );
 
   const progress = Math.min(pipeSceneTimer / 80, 1);
 
-  const startX = playerX + player.width / 2;
-  const startY = playerY - 18;
-  const endX = partnerX + partnerW / 2;
-  const endY = partnerY - 18;
+  const startX = playerDrawX + playerSize.width / 2;
+  const startY = playerDrawY - 18;
+  const endX = partnerDrawX + partnerSize.width / 2;
+  const endY = partnerDrawY - 18;
 
   const diamondX = startX + (endX - startX) * progress;
   const diamondY = startY + (endY - startY) * progress;
@@ -852,23 +906,35 @@ function drawTwirlScene() {
   const sway = Math.sin(t * 0.06) * 10;
   const bounce = Math.abs(Math.sin(t * 0.06)) * 5;
 
-  const isPlayerMale = selectedSide === "groom";
-  const isPartnerMale = selectedSide === "bride";
+  const playerType = selectedSide === "groom" ? "groom" : "bride";
+  const partnerType = selectedSide === "bride" ? "groom" : "bride";
 
-  const playerW = isPlayerMale ? 40 : 34;
-  const playerH = isPlayerMale ? 58 : 50;
+  const playerSize = getCharacterDrawSize(playerType, true);
+  const partnerSize = getCharacterDrawSize(partnerType, false);
 
-  const partnerW = isPartnerMale ? 40 : 34;
-  const partnerH = isPartnerMale ? 58 : 50;
-
-  const playerX = centerX - playerW - 4 + sway;
-  const playerY = baseY - playerH + bounce;
+  const playerX = centerX - playerSize.width - 4 + sway;
+  const playerY = baseY - playerSize.height + bounce;
 
   const partnerX = centerX + 4 - sway;
-  const partnerY = baseY - partnerH + bounce;
+  const partnerY = baseY - partnerSize.height + bounce;
 
-  drawCharacter(playerX, playerY, playerW, playerH, isPlayerMale ? "#1f2a44" : "#ff8fab");
-  drawCharacter(partnerX, partnerY, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
+  drawCharacter(
+    playerX,
+    playerY,
+    playerSize.width,
+    playerSize.height,
+    playerType === "groom" ? "#1f2a44" : "#ff8fab",
+    playerType
+  );
+
+  drawCharacter(
+    partnerX,
+    partnerY,
+    partnerSize.width,
+    partnerSize.height,
+    partnerType === "groom" ? "#1f2a44" : "#ff8fab",
+    partnerType
+  );
 
   const diamondX = centerX;
   const diamondY = baseY - 82 + Math.sin(t * 0.04) * 5;
@@ -893,19 +959,26 @@ function drawTwirlScene() {
 }
 
 function drawPlayer() {
-  const isPlayerMale = selectedSide === "groom";
+  const characterType = selectedSide === "groom" ? "groom" : "bride";
+  const size = getCharacterDrawSize(characterType, diamondOwner === "player" || event1Shown);
+
+  const drawX = player.x - cameraX + player.width / 2 - size.width / 2;
+  const drawY = player.y + player.height - size.height;
 
   drawCharacter(
-  player.x - cameraX,
-  player.y,
-  player.width,
-  player.height,
-  isPlayerMale ? "#1f2a44" : "#ff8fab",
-  isPlayerMale ? "groom" : "bride"
-);
+    drawX,
+    drawY,
+    size.width,
+    size.height,
+    characterType === "groom" ? "#1f2a44" : "#ff8fab",
+    characterType
+  );
 
   if (event1Shown) {
-    drawConstantGlow(player.x - cameraX + player.width / 2, player.y + player.height / 2);
+    drawConstantGlow(
+      player.x - cameraX + player.width / 2,
+      player.y + player.height / 2
+    );
   }
 }
 
