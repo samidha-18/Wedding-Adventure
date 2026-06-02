@@ -37,8 +37,8 @@ let keys = {};
 const levelWidth = 2500;
 
 const diamond = {
-  x: 875,
-  y: 130,
+  x: 1115,
+  y: 195,
   width: 32,
   height: 32,
   collected: false
@@ -52,29 +52,35 @@ const pipe = {
 };
 
 const platforms = [
-  { x: 250, y: 260, width: 160, height: 40 },
-  { x: 650, y: 220, width: 160, height: 40 },
-  { x: 1050, y: 180, width: 160, height: 40 },
-  { x: 1280, y: 300, width: 160, height: 40 }
+  { x: 260, y: 320, width: 160, height: 40 },
+  { x: 650, y: 280, width: 160, height: 40 },
+  { x: 1050, y: 240, width: 160, height: 40 },
+  { x: 1280, y: 340, width: 160, height: 40 }
 ];
 
 let questionBlocks = [
-  { x: 310, y: 180, width: 40, height: 40, used: false, reward: "coin" },
-  { x: 710, y: 140, width: 40, height: 40, used: false, reward: "coin" },
-  { x: 1110, y: 100, width: 40, height: 40, used: false, reward: "coin" }
+  { x: 320, y: 240, width: 40, height: 40, used: false, reward: "coin" },
+  { x: 710, y: 200, width: 40, height: 40, used: false, reward: "coin" },
+  { x: 1110, y: 160, width: 40, height: 40, used: false, reward: "coin" }
+];
+
+let secretBlocks = [
+  { x: 470, y: 300, width: 40, height: 40, discovered: false, used: false, reward: 150 },
+  { x: 850, y: 240, width: 40, height: 40, discovered: false, used: false, reward: 200 },
+  { x: 1210, y: 200, width: 40, height: 40, discovered: false, used: false, reward: 300 }
 ];
 
 let floatingRewards = [];
 
 let coins = [
-  { x: 280, y: 215, radius: 12, collected: false },
-  { x: 340, y: 215, radius: 12, collected: false },
-  { x: 680, y: 175, radius: 12, collected: false },
-  { x: 740, y: 175, radius: 12, collected: false },
-  { x: 1085, y: 135, radius: 12, collected: false },
-  { x: 1150, y: 135, radius: 12, collected: false },
-  { x: 1390, y: 255, radius: 12, collected: false },
-  { x: 1460, y: 255, radius: 12, collected: false }
+  { x: 290, y: 275, radius: 12, collected: false },
+  { x: 350, y: 275, radius: 12, collected: false },
+  { x: 680, y: 235, radius: 12, collected: false },
+  { x: 740, y: 235, radius: 12, collected: false },
+  { x: 1085, y: 195, radius: 12, collected: false },
+  { x: 1150, y: 195, radius: 12, collected: false },
+  { x: 1320, y: 295, radius: 12, collected: false },
+  { x: 1390, y: 295, radius: 12, collected: false }
 ];
 
 let enemies = [
@@ -183,6 +189,7 @@ function updatePlayer() {
 
   handlePlatformLanding();
   handleQuestionBlockHit();
+  handleSecretBlockHit();
 
   if (sparkleMessageTimer > 0) sparkleMessageTimer--;
 
@@ -244,6 +251,27 @@ function handlePlatformLanding() {
       player.jumping = false;
     }
   });
+
+  secretBlocks.forEach(block => {
+    if (!block.discovered) return;
+
+    const isFalling = player.velocityY >= 0;
+    const playerBottom = player.y + player.height;
+    const previousBottom = playerBottom - player.velocityY;
+
+    const landsOnSecret =
+      player.x < block.x + block.width &&
+      player.x + player.width > block.x &&
+      playerBottom >= block.y &&
+      previousBottom <= block.y &&
+      isFalling;
+
+    if (landsOnSecret) {
+      player.y = block.y - player.height;
+      player.velocityY = 0;
+      player.jumping = false;
+    }
+  });
 }
 
 function handleQuestionBlockHit() {
@@ -272,7 +300,42 @@ function handleQuestionBlockHit() {
         y: block.y,
         startY: block.y,
         timer: 0,
-        type: block.reward
+        type: "coin",
+        points: 10
+      });
+    }
+  });
+}
+
+function handleSecretBlockHit() {
+  secretBlocks.forEach(block => {
+    if (block.used) return;
+
+    const playerTop = player.y;
+    const previousTop = playerTop - player.velocityY;
+
+    const hitsFromBelow =
+      player.x < block.x + block.width &&
+      player.x + player.width > block.x &&
+      playerTop <= block.y + block.height &&
+      previousTop >= block.y + block.height &&
+      player.velocityY < 0;
+
+    if (hitsFromBelow) {
+      block.discovered = true;
+      block.used = true;
+      player.velocityY = 3;
+
+      score += block.reward;
+      updateScore();
+
+      floatingRewards.push({
+        x: block.x + block.width / 2,
+        y: block.y,
+        startY: block.y,
+        timer: 0,
+        type: "bonus",
+        points: block.reward
       });
     }
   });
@@ -282,11 +345,6 @@ function updateFloatingRewards() {
   floatingRewards.forEach(reward => {
     reward.timer++;
     reward.y = reward.startY - Math.sin(Math.min(reward.timer / 35, 1) * Math.PI) * 45;
-
-    if (reward.timer === 35) {
-      score += 10;
-      updateScore();
-    }
   });
 
   floatingRewards = floatingRewards.filter(reward => reward.timer < 60);
@@ -404,11 +462,8 @@ function isPipeUnlocked() {
 }
 
 function checkPipeTrigger() {
-
   if (event1Shown || pipeSceneActive) return;
-
   if (!isPipeUnlocked()) return;
-
   if (diamondOwner !== "player") return;
 
   const nearPipe =
@@ -417,7 +472,6 @@ function checkPipeTrigger() {
     player.y + player.height >= pipe.y;
 
   if (nearPipe) {
-
     gamePaused = true;
     pipeSceneActive = true;
     pipeSceneStage = "pop";
@@ -495,6 +549,7 @@ function drawGame() {
 
   drawPlatforms();
   drawQuestionBlocks();
+  drawSecretBlocks();
   drawFloatingRewards();
   drawCoins();
   drawDiamondInLevel();
@@ -557,9 +612,25 @@ function drawQuestionBlocks() {
   });
 }
 
+function drawSecretBlocks() {
+  secretBlocks.forEach(block => {
+    if (block.discovered) {
+      drawSquareBlock(block.x, block.y, "#d6a040");
+    }
+  });
+}
+
 function drawFloatingRewards() {
+  const context = ctx();
+
   floatingRewards.forEach(reward => {
-    drawCoinShape(reward.x - cameraX, reward.y, 11);
+    if (reward.type === "bonus") {
+      context.fillStyle = "#fff7b2";
+      context.font = "18px Arial";
+      context.fillText("+" + reward.points, reward.x - cameraX - 12, reward.y);
+    } else {
+      drawCoinShape(reward.x - cameraX, reward.y, 11);
+    }
   });
 }
 
@@ -585,16 +656,25 @@ function drawCoinShape(x, y, radius) {
 
 function drawDiamondInLevel() {
   if (diamond.collected) return;
-  drawSmallDiamond(diamond.x - cameraX, diamond.y);
+
+  const t = Date.now() / 220;
+  const scale = 1 + Math.sin(t) * 0.18;
+  const angle = t * 0.8;
+
+  drawRotatingDiamond(diamond.x - cameraX + 12, diamond.y + 12, 16 * scale, angle);
 }
 
 function drawDiamondFollowingPlayer() {
   if (diamondOwner !== "player") return;
 
-  const x = player.x - cameraX + player.width / 2 - 12;
-  const y = player.y - 32;
+  const t = Date.now() / 220;
+  const scale = 1 + Math.sin(t) * 0.12;
+  const angle = t * 0.8;
 
-  drawSmallDiamond(x, y);
+  const x = player.x - cameraX + player.width / 2;
+  const y = player.y - 18;
+
+  drawRotatingDiamond(x, y, 13 * scale, angle);
   drawBlinkGlow(player.x - cameraX + player.width / 2, player.y + player.height / 2);
 }
 
@@ -705,16 +785,16 @@ function drawHandoffScene() {
 
   const progress = Math.min(pipeSceneTimer / 80, 1);
 
-  const startX = playerX + player.width / 2 - 12;
-  const startY = playerY - 30;
-  const endX = partnerX + partnerW / 2 - 12;
-  const endY = partnerY - 30;
+  const startX = playerX + player.width / 2;
+  const startY = playerY - 18;
+  const endX = partnerX + partnerW / 2;
+  const endY = partnerY - 18;
 
   const diamondX = startX + (endX - startX) * progress;
   const diamondY = startY + (endY - startY) * progress;
 
-  drawSmallDiamond(diamondX, diamondY);
-  drawBlinkGlow(diamondX + 12, diamondY + 12);
+  drawRotatingDiamond(diamondX, diamondY, 13, progress * 8);
+  drawBlinkGlow(diamondX, diamondY);
 }
 
 function drawTwirlScene() {
@@ -745,10 +825,10 @@ function drawTwirlScene() {
   drawCharacter(playerX, playerY, playerW, playerH, isPlayerMale ? "#1f2a44" : "#ff8fab");
   drawCharacter(partnerX, partnerY, partnerW, partnerH, isPartnerMale ? "#1f2a44" : "#ff8fab");
 
-  const diamondX = centerX - 12;
+  const diamondX = centerX;
   const diamondY = baseY - 82 + Math.sin(t * 0.04) * 5;
 
-  drawSmallDiamond(diamondX, diamondY);
+  drawRotatingDiamond(diamondX, diamondY, 13, t * 0.06);
   drawBlinkGlow(centerX, baseY - 35);
 
   for (let i = 0; i < 6; i++) {
@@ -791,20 +871,26 @@ function drawCharacter(x, y, width, height, bodyColor) {
   context.fillRect(x + width * 0.62, y + 15, 4, 4);
 }
 
-function drawSmallDiamond(x, y) {
+function drawRotatingDiamond(centerX, centerY, size, angle) {
   const context = ctx();
+
+  context.save();
+  context.translate(centerX, centerY);
+  context.rotate(angle);
 
   context.fillStyle = "#b9f2ff";
   context.beginPath();
-  context.moveTo(x + 12, y);
-  context.lineTo(x + 24, y + 10);
-  context.lineTo(x + 12, y + 24);
-  context.lineTo(x, y + 10);
+  context.moveTo(0, -size);
+  context.lineTo(size, 0);
+  context.lineTo(0, size);
+  context.lineTo(-size, 0);
   context.closePath();
   context.fill();
 
   context.strokeStyle = "#ffffff";
   context.stroke();
+
+  context.restore();
 }
 
 function drawBlinkGlow(x, y) {
