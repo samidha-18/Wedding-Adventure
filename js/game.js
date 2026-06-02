@@ -359,10 +359,6 @@ function updateEnemies() {
         score += enemy.id === "pipeGuard" ? 200 : 100;
         updateScore();
         player.velocityY = -8;
-
-        if (enemy.id === "pipeGuard") {
-          sparkleMessageTimer = 120;
-        }
       } else {
         loseLife();
       }
@@ -615,12 +611,6 @@ function drawPipe() {
   context.strokeRect(pipe.x - cameraX - 10, pipe.y, pipe.width + 20, 20);
 }
 
-  if (!isPipeUnlocked()) {
-    context.fillStyle = "rgba(255, 0, 0, 0.3)";
-    context.fillRect(pipe.x - cameraX - 18, pipe.y - 10, 8, pipe.height + 20);
-  }
-}
-
 function drawPipeLockMessage() {
   if (isPipeUnlocked() || pipeSceneActive || event1Shown) return;
 
@@ -751,10 +741,10 @@ function drawTwirlScene() {
   }
 
   context.fillStyle = "rgba(0, 0, 0, 0.55)";
-  context.fillRect(300, 35, 300, 45);
+  context.fillRect(300, 35, 360, 45);
 
   context.fillStyle = "#fff7b2";
-  context.font = "22px Arial";
+  context.font = "20px Arial";
   context.fillText("We’re Ringing in the Wedding Bells...", 320, 65);
 }
 
