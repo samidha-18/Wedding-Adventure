@@ -549,43 +549,33 @@ function updatePipeScene() {
   if (!pipeSceneActive) return;
 
   pipeSceneTimer++;
-if (pipeSceneStage === "missingPop" && pipeSceneTimer > 35) {
-  pipeSceneStage = "missingMessage";
-  pipeSceneTimer = 0;
-  return;
-}
 
-if (pipeSceneStage === "missingMessage" && pipeSceneTimer > 95) {
-  pipeSceneStage = "missingDown";
-  pipeSceneTimer = 0;
-  return;
-}
+  if (pipeSceneStage === "missingPop" && pipeSceneTimer > 35) {
+    pipeSceneStage = "missingMessage";
+    pipeSceneTimer = 0;
+    return;
+  }
 
-if (pipeSceneStage === "missingDown" && pipeSceneTimer > 35) {
-  pipeSceneActive = false;
-  gamePaused = false;
-  pipeSceneStage = "";
-  pipeSceneTimer = 0;
+  if (pipeSceneStage === "missingMessage" && pipeSceneTimer > 95) {
+    pipeSceneStage = "missingDown";
+    pipeSceneTimer = 0;
+    return;
+  }
 
-  player.x = pipe.x - player.width - 90;
-  player.y = 420 - player.height;
+  if (pipeSceneStage === "missingDown" && pipeSceneTimer > 35) {
+    pipeSceneActive = false;
+    gamePaused = false;
+    pipeSceneStage = "";
+    pipeSceneTimer = 0;
 
-  return;
-}
-if (pipeSceneStage === "missingDiamond") {
+    player.x = pipe.x - player.width - 90;
+    player.y = 420 - player.height;
+    player.velocityY = 0;
 
-if (pipeSceneTimer > 220) {
+    return;
+  }
 
-pipeSceneActive = false;
-gamePaused = false;
-pipeSceneTimer = 0;
-}
-
-return;
-}
-
-  
-  if (pipeSceneStage === "pop" && pipeSceneTimer > 100) {
+  if (pipeSceneStage === "pop" && pipeSceneTimer > 45) {
     pipeSceneStage = "handoff";
     pipeSceneTimer = 0;
   }
@@ -653,40 +643,24 @@ function drawGame() {
   drawDiamondInLevel();
   drawEnemies();
 
- if (pipeSceneActive && pipeSceneStage === "pop") {
-  drawPartnerPopBehindPipe();
-  drawPipe();
-  drawPlayer();
-  drawDiamondFollowingPlayer();
-} else {
-
-if (
-  pipeSceneActive &&
-  (
-    pipeSceneStage === "pop" ||
-    pipeSceneStage === "missingPop" ||
-    pipeSceneStage === "missingMessage" ||
-    pipeSceneStage === "missingDown"
-  )
-) {
-  drawPartnerPopBehindPipe();
-  drawPipe();
-
   if (
-    pipeSceneStage === "missingPop" ||
-    pipeSceneStage === "missingMessage" ||
-    pipeSceneStage === "missingDown"
+    pipeSceneActive &&
+    (
+      pipeSceneStage === "pop" ||
+      pipeSceneStage === "missingPop" ||
+      pipeSceneStage === "missingMessage" ||
+      pipeSceneStage === "missingDown"
+    )
   ) {
+    drawPartnerPopBehindPipe();
+    drawPipe();
     drawPlayer();
-  }
+    drawDiamondFollowingPlayer();
 
-  drawDiamondFollowingPlayer();
-
-  if (pipeSceneStage === "missingMessage") {
-    drawMissingDiamondMessage();
-  }
-
-} else {
+    if (pipeSceneStage === "missingMessage") {
+      drawMissingDiamondMessage();
+    }
+  } else {
     drawPipe();
 
     if (pipeSceneActive) {
@@ -943,7 +917,7 @@ if (pipeSceneStage === "missingMessage") {
 }
 
 if (pipeSceneStage === "missingDown") {
-  progress = 1 - Math.min(pipeSceneTimer / 70, 1);
+  progress = 1 - Math.min(pipeSceneTimer / 35, 1);
 }
 
   const startY = pipe.y + 25;
@@ -1127,7 +1101,7 @@ function drawCharacter(x, y, width, height, bodyColor, characterType = null) {
     sprite = brideSprite;
   }
 
-  if (sprite && sprite.complete) {
+  if (sprite && sprite.complete && sprite.naturalWidth > 0) {
     context.drawImage(
       sprite,
       0,
