@@ -10,6 +10,8 @@ let event1Shown = false;
 let diamondOwner = "none";
 let sparkleMessageTimer = 0;
 let diamondMessage = "";
+let powerUpTimer = 0;
+let isPoweredUp = false;
 
 let pipeSceneActive = false;
 let pipeSceneStage = "";
@@ -47,14 +49,20 @@ function getCharacterDrawSize(type, powered = false) {
   let width = isGroom ? 40 : 34;
   let height = isGroom ? 58 : 50;
 
+  let scale = 1.65;
+
   if (powered) {
-    width *= 1.25;
-    height *= 1.25;
+    scale = 2.05;
+  }
+
+  if (powerUpTimer > 0 && powered) {
+    const bounce = Math.sin(powerUpTimer * 0.35) * 0.18;
+    scale += bounce;
   }
 
   return {
-    width: width * visualScale,
-    height: height * visualScale
+    width: width * scale,
+    height: height * scale
   };
 }
 
@@ -227,6 +235,7 @@ function updatePlayer() {
   handleSecretBlockHit();
 
   if (sparkleMessageTimer > 0) sparkleMessageTimer--;
+  if (powerUpTimer > 0) powerUpTimer--;
 
   updateFloatingRewards();
   updateCamera();
@@ -421,7 +430,9 @@ function collectDiamond() {
   if (collision) {
     diamond.collected = true;
     diamondOwner = "player";
-
+    isPoweredUp = true;
+    powerUpTimer = 45;
+    
 score += 250;
 updateScore();
 
@@ -960,7 +971,7 @@ function drawTwirlScene() {
 
 function drawPlayer() {
   const characterType = selectedSide === "groom" ? "groom" : "bride";
-  const size = getCharacterDrawSize(characterType, diamondOwner === "player" || event1Shown);
+  const size = getCharacterDrawSize(characterType, isPoweredUp || event1Shown);
 
   const drawX = player.x - cameraX + player.width / 2 - size.width / 2;
   const drawY = player.y + player.height - size.height;
