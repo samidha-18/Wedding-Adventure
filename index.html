@@ -1,50 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Wedding Adventure</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wedding Adventure Invite</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
 
-  <div id="startScreen">
-    <h1>Wedding Adventure</h1>
+  <section id="startScreen" class="start-screen">
+    <div class="start-card">
+      <h1>Wedding Adventure</h1>
+      <p class="subtitle">Choose your team and begin the quest.</p>
 
-    <button onclick="selectSide('groom')">Groom Side 🤵</button>
-    <button onclick="selectSide('bride')">Bride Side 👰</button>
-    <div id="selectionStatus"></div>
-    <br><br>
+      <div id="formMessage" class="form-message hidden"></div>
 
-    <input id="playerName" type="text" placeholder="Enter Player Name">
+      <div id="teamButtons" class="team-buttons">
+        <button id="groomButton" class="team-button" onclick="selectSide('groom')">
+          🤵 Team Groom
+        </button>
 
-    <br><br>
+        <button id="brideButton" class="team-button" onclick="selectSide('bride')">
+          👰 Team Bride
+        </button>
+      </div>
 
-    <button onclick="startGame()">Start Game</button>
-  </div>
+      <input
+        id="playerName"
+        type="text"
+        placeholder="Enter your name"
+        maxlength="15"
+      />
 
-  <div id="gameScreen" style="display:none;">
-    <div id="hud">
-      <span id="welcomeText"></span>
-      <span>Score: <b id="score">0</b></span>
-      <span>Lives: <b id="lives">❤️❤️❤️</b></span>
+      <button class="start-button" onclick="startGame()">
+        Start Game
+      </button>
+    </div>
+  </section>
+
+  <section id="gameScreen" class="game-screen">
+    <div class="hud">
+      <div>Player: <span id="welcomeText">Player</span></div>
+      <div>Score: <span id="score">0</span></div>
+      <div>Lives: <span id="lives">❤️❤️❤️</span></div>
     </div>
 
     <canvas id="gameCanvas" width="900" height="500"></canvas>
+  </section>
 
-    <p>Use ← → to move. Space to jump.</p>
-  </div>
-
-  <div id="eventOverlay" class="overlay hidden">
-    <div class="eventCard">
+  <div id="eventOverlay" class="event-overlay hidden">
+    <div class="event-card">
       <h2 id="eventTitle">Sangeet Night</h2>
       <p id="eventDate">12 December 2026</p>
       <p id="eventTime">7:00 PM onwards</p>
       <p id="eventVenue">Grand Ballroom</p>
+
       <button onclick="closeEvent()">Continue</button>
     </div>
   </div>
 
-  <script src="js/game.js"></script>
-
+  <script src="game.js"></script>
 </body>
 </html>
