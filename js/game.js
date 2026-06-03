@@ -576,12 +576,9 @@ if (pipeSceneStage === "missingDiamond") {
 
 if (pipeSceneTimer > 220) {
 
-```
 pipeSceneActive = false;
 gamePaused = false;
 pipeSceneTimer = 0;
-```
-
 }
 
 return;
@@ -662,8 +659,6 @@ function drawGame() {
   drawPlayer();
   drawDiamondFollowingPlayer();
 } else {
-
-Replace with:
 
 if (
   pipeSceneActive &&
