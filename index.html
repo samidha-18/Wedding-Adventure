@@ -9,34 +9,48 @@
 <body>
 
   <section id="startScreen" class="start-screen">
-    <div class="start-card">
-      <h1>Wedding Adventure</h1>
-      <p class="subtitle">Choose your team and begin the quest.</p>
+  <div class="start-card">
 
-      <div id="formMessage" class="form-message hidden"></div>
+    <div class="pixel-cloud cloud-one"></div>
+    <div class="pixel-cloud cloud-two"></div>
 
-      <div id="teamButtons" class="team-buttons">
-        <button id="groomButton" class="team-button" onclick="selectSide('groom')">
-          🤵 Team Groom
-        </button>
+    <p class="mini-label">Wedding Quest</p>
 
-        <button id="brideButton" class="team-button" onclick="selectSide('bride')">
-          👰 Team Bride
-        </button>
-      </div>
+    <h1>
+      John <span>♥</span> Jane
+    </h1>
 
-      <input
-        id="playerName"
-        type="text"
-        placeholder="Enter your name"
-        maxlength="15"
-      />
+    <p class="subtitle">
+      Choose your side and begin the adventure.
+    </p>
 
-      <button class="start-button" onclick="startGame()">
-        Start Game
+    <div id="formMessage" class="form-message hidden"></div>
+
+    <div id="teamButtons" class="team-buttons">
+      <button id="groomButton" class="team-button" onclick="selectSide('groom')">
+        <span class="team-icon">🤵</span>
+        <span>Team Groom</span>
+      </button>
+
+      <button id="brideButton" class="team-button" onclick="selectSide('bride')">
+        <span class="team-icon">👰</span>
+        <span>Team Bride</span>
       </button>
     </div>
-  </section>
+
+    <input
+      id="playerName"
+      type="text"
+      placeholder="Enter your player name"
+      maxlength="15"
+    />
+
+    <button class="start-button" onclick="startGame()">
+      Begin Adventure
+    </button>
+
+  </div>
+</section>
 
   <section id="gameScreen" class="game-screen">
     <div class="hud">
