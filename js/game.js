@@ -549,25 +549,25 @@ function updatePipeScene() {
   if (!pipeSceneActive) return;
 
   pipeSceneTimer++;
-if (pipeSceneStage === "missingPop" && pipeSceneTimer > 80) {
+if (pipeSceneStage === "missingPop" && pipeSceneTimer > 35) {
   pipeSceneStage = "missingMessage";
   pipeSceneTimer = 0;
   return;
 }
 
-if (pipeSceneStage === "missingMessage" && pipeSceneTimer > 140) {
+if (pipeSceneStage === "missingMessage" && pipeSceneTimer > 95) {
   pipeSceneStage = "missingDown";
   pipeSceneTimer = 0;
   return;
 }
 
-if (pipeSceneStage === "missingDown" && pipeSceneTimer > 70) {
+if (pipeSceneStage === "missingDown" && pipeSceneTimer > 35) {
   pipeSceneActive = false;
   gamePaused = false;
   pipeSceneStage = "";
   pipeSceneTimer = 0;
 
-  player.x = pipe.x - player.width - 80;
+  player.x = pipe.x - player.width - 90;
   player.y = 420 - player.height;
 
   return;
@@ -656,12 +656,42 @@ function drawGame() {
   drawDiamondInLevel();
   drawEnemies();
 
-  if (pipeSceneActive && pipeSceneStage === "pop") {
-    drawPartnerPopBehindPipe();
-    drawPipe();
+ if (pipeSceneActive && pipeSceneStage === "pop") {
+  drawPartnerPopBehindPipe();
+  drawPipe();
+  drawPlayer();
+  drawDiamondFollowingPlayer();
+} else {
+
+Replace with:
+
+if (
+  pipeSceneActive &&
+  (
+    pipeSceneStage === "pop" ||
+    pipeSceneStage === "missingPop" ||
+    pipeSceneStage === "missingMessage" ||
+    pipeSceneStage === "missingDown"
+  )
+) {
+  drawPartnerPopBehindPipe();
+  drawPipe();
+
+  if (
+    pipeSceneStage === "missingPop" ||
+    pipeSceneStage === "missingMessage" ||
+    pipeSceneStage === "missingDown"
+  ) {
     drawPlayer();
-    drawDiamondFollowingPlayer();
-  } else {
+  }
+
+  drawDiamondFollowingPlayer();
+
+  if (pipeSceneStage === "missingMessage") {
+    drawMissingDiamondMessage();
+  }
+
+} else {
     drawPipe();
 
     if (pipeSceneActive) {
@@ -865,7 +895,6 @@ function drawPipeScene() {
     pipeSceneStage === "missingMessage" ||
     pipeSceneStage === "missingDown"
   ) {
-    drawMissingDiamondScene();
     return;
   }
 
@@ -874,6 +903,18 @@ function drawPipeScene() {
 
 }
 
+function drawMissingDiamondMessage() {
+  const context = ctx();
+
+  context.fillStyle = "rgba(0,0,0,0.65)";
+  context.fillRect(260, 35, 390, 75);
+
+  context.fillStyle = "#fff7b2";
+  context.font = "24px Arial";
+  context.fillText("Love Found.", 300, 65);
+  context.fillText("Diamond Missing.", 300, 95);
+}
+  
 function drawMissingDiamondScene() {
   const context = ctx();
 
@@ -900,7 +941,7 @@ function drawPartnerPopBehindPipe() {
   const baseH = partnerType === "groom" ? 58 : 50;
   const size = getCharacterDrawSize(partnerType, true);
 
-  let progress = Math.min(pipeSceneTimer / 100, 1);
+  let progress = Math.min(pipeSceneTimer / 35, 1);
 
 if (pipeSceneStage === "missingMessage") {
   progress = 1;
