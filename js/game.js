@@ -16,6 +16,7 @@ let isPoweredUp = false;
 let pipeSceneActive = false;
 let pipeSceneStage = "";
 let pipeSceneTimer = 0;
+let missingDiamondScene = false;
 
 const coupleNames = {
   groom: "John",
@@ -44,15 +45,20 @@ let player = {
 const visualScale = 1.65;
 
 function getCharacterDrawSize(type, powered = false) {
-  const isGroom = type === "groom";
 
-  let width = isGroom ? 40 : 34;
-  let height = isGroom ? 58 : 50;
+  let width = 34;
+  let height = 50;
 
   let scale = 1.65;
 
   if (powered) {
-    scale = 2.05;
+
+    if (type === "groom") {
+      scale = 2.145; // 130%
+    } else {
+      scale = 2.0625; // 125%
+    }
+
   }
 
   if (powerUpTimer > 0 && powered) {
@@ -513,31 +519,54 @@ function isPipeUnlocked() {
 }
 
 function checkPipeTrigger() {
-  if (event1Shown || pipeSceneActive) return;
-  if (!isPipeUnlocked()) return;
-  if (diamondOwner !== "player") return;
 
-  const nearPipe =
-    player.x + player.width > pipe.x - 10 &&
-    player.x < pipe.x + pipe.width + 10 &&
-    player.y + player.height >= pipe.y;
+if (event1Shown || pipeSceneActive) return;
+if (!isPipeUnlocked()) return;
 
-  if (nearPipe) {
-    gamePaused = true;
-    pipeSceneActive = true;
-    pipeSceneStage = "pop";
-    pipeSceneTimer = 0;
+const nearPipe =
+player.x + player.width > pipe.x - 10 &&
+player.x < pipe.x + pipe.width + 10 &&
+player.y + player.height >= pipe.y;
 
-    player.x = pipe.x - player.width - 10;
-    player.y = pipe.y - player.height;
-  }
+if (!nearPipe) return;
+
+gamePaused = true;
+pipeSceneActive = true;
+pipeSceneTimer = 0;
+
+player.x = pipe.x - player.width - 10;
+player.y = pipe.y - player.height;
+
+if (diamondOwner === "player") {
+pipeSceneStage = "pop";
+} else {
+pipeSceneStage = "missingDiamond";
 }
+
+}
+
 
 function updatePipeScene() {
   if (!pipeSceneActive) return;
 
   pipeSceneTimer++;
 
+if (pipeSceneStage === "missingDiamond") {
+
+if (pipeSceneTimer > 220) {
+
+```
+pipeSceneActive = false;
+gamePaused = false;
+pipeSceneTimer = 0;
+```
+
+}
+
+return;
+}
+
+  
   if (pipeSceneStage === "pop" && pipeSceneTimer > 100) {
     pipeSceneStage = "handoff";
     pipeSceneTimer = 0;
@@ -809,9 +838,33 @@ function drawPipeLockMessage() {
 }
 
 function drawPipeScene() {
-  if (pipeSceneStage === "handoff") drawHandoffScene();
-  if (pipeSceneStage === "twirl") drawTwirlScene();
+
+if (pipeSceneStage === "missingDiamond") {
+
+```
+drawPartnerPopBehindPipe();
+
+const context = ctx();
+
+context.fillStyle = "rgba(0,0,0,0.65)";
+context.fillRect(240, 35, 420, 70);
+
+context.fillStyle = "#fff7b2";
+context.font = "22px Arial";
+
+context.fillText("Love Found.", 280, 62);
+context.fillText("Diamond Missing.", 280, 90);
+
+return;
+```
+
 }
+
+if (pipeSceneStage === "handoff") drawHandoffScene();
+if (pipeSceneStage === "twirl") drawTwirlScene();
+
+}
+
 
 function drawPartnerPopBehindPipe() {
   const context = ctx();
@@ -821,7 +874,7 @@ function drawPartnerPopBehindPipe() {
 
   const baseW = partnerType === "groom" ? 40 : 34;
   const baseH = partnerType === "groom" ? 58 : 50;
-  const size = getCharacterDrawSize(partnerType, false);
+  const size = getCharacterDrawSize(partnerType, true);
 
   const progress = Math.min(pipeSceneTimer / 100, 1);
 
@@ -858,7 +911,7 @@ function drawHandoffScene() {
   const partnerType = selectedSide === "bride" ? "groom" : "bride";
 
   const playerSize = getCharacterDrawSize(playerType, true);
-  const partnerSize = getCharacterDrawSize(partnerType, false);
+  const partnerSize = getCharacterDrawSize(partnerType, true);
 
   const playerCollisionX = pipe.x - player.width - 10;
   const playerCollisionY = pipe.y - player.height;
@@ -921,7 +974,7 @@ function drawTwirlScene() {
   const partnerType = selectedSide === "bride" ? "groom" : "bride";
 
   const playerSize = getCharacterDrawSize(playerType, true);
-  const partnerSize = getCharacterDrawSize(partnerType, false);
+  const partnerSize = getCharacterDrawSize(partnerType, true);
 
   const playerX = centerX - playerSize.width - 4 + sway;
   const playerY = baseY - playerSize.height + bounce;
