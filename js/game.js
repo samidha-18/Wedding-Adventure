@@ -1019,44 +1019,69 @@ function drawPartnerPopBehindPipe() {
 function drawHandoffScene() {
   const playerType = getPlayerType();
   const partnerType = getPartnerType();
- 
+
   const playerSize = getCharacterDrawSize(playerType, true);
   const partnerSize = getCharacterDrawSize(partnerType, true);
- 
+
   const playerCollisionX = pipe.x - player.width - 10;
   const playerCollisionY = pipe.y - player.height;
- 
+
   const partnerBaseW = 34;
   const partnerBaseH = 50;
   const partnerCollisionX = pipe.x + pipe.width / 2 - partnerBaseW / 2;
   const partnerCollisionY = pipe.y - partnerBaseH;
- 
+
   const playerDrawX = playerCollisionX - cameraX + player.width / 2 - playerSize.width / 2;
   const playerDrawY = playerCollisionY + player.height - playerSize.height;
- 
+
   const partnerDrawX = partnerCollisionX - cameraX + partnerBaseW / 2 - partnerSize.width / 2;
   const partnerDrawY = partnerCollisionY + partnerBaseH - partnerSize.height;
- 
+
   drawCharacter(playerDrawX, playerDrawY, playerSize.width, playerSize.height, getCharacterColor(playerType), playerType);
   drawCharacter(partnerDrawX, partnerDrawY, partnerSize.width, partnerSize.height, getCharacterColor(partnerType), partnerType);
- 
+
   const progress = Math.min(pipeSceneTimer / 80, 1);
- 
+
   const startX = playerDrawX + playerSize.width / 2;
   const startY = playerDrawY - 18;
+
   const endX = partnerDrawX + partnerSize.width / 2;
   const endY = partnerDrawY - 18;
- 
-  const tokenX = startX + (endX - startX) * progress;
-  const tokenY = startY + (endY - startY) * progress;
- 
-  if (progress < 0.52) {
+
+  const midX = (startX + endX) / 2;
+  const midY = Math.min(startY, endY) - 22;
+
+  if (progress < 0.42) {
+    const moveProgress = progress / 0.42;
+
+    const tokenX = startX + (midX - startX) * moveProgress;
+    const tokenY = startY + (midY - startY) * moveProgress;
+
     drawRotatingDiamond(tokenX, tokenY, 13, progress * 8);
+    drawBlinkGlow(tokenX, tokenY);
+
+  } else if (progress < 0.58) {
+    const context = ctx();
+    const flashProgress = (progress - 0.42) / 0.16;
+    const flashSize = 12 + Math.sin(flashProgress * Math.PI) * 20;
+
+    drawBlinkGlow(midX, midY);
+
+    context.fillStyle = "#fff7b2";
+    context.font = `${flashSize * 2}px Arial`;
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText("✦", midX, midY);
+
   } else {
+    const moveProgress = (progress - 0.58) / 0.42;
+
+    const tokenX = midX + (endX - midX) * moveProgress;
+    const tokenY = midY + (endY - midY) * moveProgress;
+
     drawRotatingRing(tokenX, tokenY, 15, progress * 8);
+    drawBlinkGlow(tokenX, tokenY);
   }
- 
-  drawBlinkGlow(tokenX, tokenY);
 }
  
 function drawTwirlScene() {
