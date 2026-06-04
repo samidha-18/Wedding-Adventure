@@ -1067,11 +1067,20 @@ function drawHandoffScene() {
 
     drawBlinkGlow(midX, midY);
 
-    context.fillStyle = "#fff7b2";
-    context.font = `${flashSize * 2}px Arial`;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText("✦", midX, midY);
+   const flickerOn = Math.floor(pipeSceneTimer / 4) % 2 === 0;
+
+if (flickerOn) {
+  context.fillStyle = "#fff7b2";
+  context.font = `${flashSize * 2}px Arial`;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillText("✦", midX, midY);
+}
+
+context.fillStyle = "rgba(255, 247, 178, 0.35)";
+context.beginPath();
+context.arc(midX, midY, flashSize, 0, Math.PI * 2);
+context.fill();
 
   } else {
     const moveProgress = (progress - 0.58) / 0.42;
